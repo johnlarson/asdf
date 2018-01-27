@@ -41,6 +41,11 @@ ruleset wovyn_base {
 			too_hot = temp > temperature_threshold
 		}
 		send_directive("temp_threshold", {"threshold_violation": too_hot})
+		fired {
+			raise wovyn event "threshold_violation"
+				attributes event:attrs()
+				if too_hot
+		}
 	}
 
 }
