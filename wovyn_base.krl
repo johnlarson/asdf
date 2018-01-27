@@ -2,6 +2,10 @@ ruleset wovyn_base {
 	
 	meta {
 		name "Wovyn Base"
+		use module secrets
+		use module twilio with
+			sid = keys:twilio{"sid"} and
+			auth_token = keys:twilio{"auth_token"}
 		shares __testing
 	}
 
@@ -15,7 +19,7 @@ ruleset wovyn_base {
 				}
 			]
 		}
-		temperature_threshold = 100
+		TEMPERATURE_THRESHOLD = 100
 	}
 
 	rule process_heartbeat {
@@ -38,7 +42,7 @@ ruleset wovyn_base {
 		select when wovyn new_temperature_reading
 		pre {
 			temp = event:attr("temperature")
-			too_hot = temp > temperature_threshold
+			too_hot = temp > TEMPERATURE_THRESHOLD
 		}
 		send_directive("temp_threshold", {"threshold_violation": too_hot})
 		fired {
@@ -46,6 +50,11 @@ ruleset wovyn_base {
 				attributes event:attrs()
 				if too_hot
 		}
+	}
+
+	rule threshold_notification {
+		select when wovyn threshold_violation
+		twilio:send(secrets:my_number, secrets:twilio_number, "Too hot!")
 	}
 
 }
