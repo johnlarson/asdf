@@ -18,7 +18,7 @@ ruleset wovyn_base {
 	}
 
 	rule process_heartbeat {
-		select when wovyn heartbeat
+		select when wovyn heartbeat where data.decode()["genericThing"]
 		pre {
 			data = event:attr("data").decode().klog()
 		}
