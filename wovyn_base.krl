@@ -20,9 +20,17 @@ ruleset wovyn_base {
 	rule process_heartbeat {
 		select when wovyn heartbeat where data.decode()["genericThing"]
 		pre {
-			data = event:attr("data").decode().klog()
+			data = event:attr("data").decode()
+			generic = data["genericThing"]
 		}
 		send_directive("heartbeat", data)
+		fired {
+			raise wovyn event "new_temperature_reading"
+				attributes {
+					"temperature": generic["data"]["temperature"]["temperatureF"],
+					"timestamp": generic["heartBeatSeconds"]
+				}
+		}
 	}
 
 }
