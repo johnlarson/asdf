@@ -19,7 +19,10 @@ ruleset wovyn_base {
 
 	rule process_heartbeat {
 		select when wovyn heartbeat
-		send_directive("heartbeat")
+		pre {
+			data = event:attr("data").decode().klog()
+		}
+		send_directive("heartbeat", data)
 	}
 
 }
