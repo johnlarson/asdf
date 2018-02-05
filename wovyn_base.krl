@@ -19,16 +19,15 @@ ruleset wovyn_base {
 				}
 			]
 		}
-		TEMPERATURE_THRESHOLD = 100
+		TEMPERATURE_THRESHOLD = 1
 	}
 
 	rule process_heartbeat {
-		select when wovyn heartbeat where data.decode()["genericThing"]
+		select when wovyn heartbeat where event:attr("genericThing")
 		pre {
-			data = event:attr("data").decode()
-			generic = data["genericThing"].klog("GENERIC")
+			generic = event:attr("genericThing")
 		}
-		send_directive("heartbeat", data)
+		send_directive("heartbeat", generic)
 		fired {
 			raise wovyn event "new_temperature_reading"
 				attributes {
