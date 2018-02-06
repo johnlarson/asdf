@@ -32,7 +32,7 @@ ruleset wovyn_base {
 			raise wovyn event "new_temperature_reading"
 				attributes {
 					"temperature": generic["data"]["temperature"][0]["temperatureF"],
-					"timestamp": generic["heartBeatSeconds"]
+					"timestamp": time:now()
 				}
 		}
 	}

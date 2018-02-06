@@ -12,8 +12,10 @@ ruleset temperature_store {
 		}
 		send_directive("hmmm", {})
 		fired {
-			ent:readings := {"temperature": temp, "timestamp": time};
-			a = event:attr("temperature").klog("AGAIN");
+			to_add = {"temperature": temp, "timestamp": time};
+			to_add = [to_add].klog("MMM");
+			ent:readings := ent:readings.defaultsTo([]).klog("readings");
+			ent:readings := ent:readings.append(to_add);
 			a = ent:readings.klog("READINGS")
 		}
 	}
