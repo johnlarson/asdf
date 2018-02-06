@@ -2,6 +2,15 @@ ruleset temperature_store {
 	
 	meta {
 		name "Temperature Store"
+		provides temperatures
+	}
+
+	global {
+
+		temperatures = function() {
+			{"readings": ent:readings}
+		}
+
 	}
 
 	rule collect_temperatures {
