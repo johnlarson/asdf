@@ -3,6 +3,7 @@ ruleset temperature_store {
 	meta {
 		name "Temperature Store"
 		provides temperatures, threshold_violations, inrange_temperatures
+		shares temperatures, threshold_violations, inrange_temperatures
 	}
 
 	global {
