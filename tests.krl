@@ -19,6 +19,11 @@ ruleset tests {
 					"domain": "test",
 					"type": "threshold_violations",
 					"attrs": []
+				},
+				{
+					"domain": "test",
+					"type": "inrange",
+					"attrs": []
 				}
 			]
 		}
@@ -33,6 +38,11 @@ ruleset tests {
 	rule threshold_violations {
 		select when test threshold_violations
 		send_directive("threshold_violations", {"violations": temperature_store:threshold_violations()})
+	}
+
+	rule inrange_temperatures {
+		select when test inrange
+		send_directive("inrange", {"inrange": temperature_store:inrange_temperatures()})
 	}
 
 }
