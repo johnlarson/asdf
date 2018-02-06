@@ -17,4 +17,17 @@ ruleset temperature_store {
 		}
 	}
 
+	rule collect_threshold_violations {
+		select when wovyn threshold_violation
+		pre {
+			temp = event:attr("temperature")
+			time = event:attr("timestamp")
+			to_add = [{"temperature": temp, "timestamp": time}];
+		}
+		fired {
+			ent:threshold_violations := ent:threshold_violations.defaultsTo([]);
+			ent:threshold_violations := ent:threshold_violations.append(to_add).klog("VIOLATIONS:")
+		}
+	}
+
 }
