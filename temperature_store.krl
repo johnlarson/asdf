@@ -13,7 +13,7 @@ ruleset temperature_store {
 		}
 		fired {
 			ent:readings := ent:readings.defaultsTo([]);
-			ent:readings := ent:readings.append(to_add)
+			ent:readings := ent:readings.append(to_add).klog("READIngs")
 		}
 	}
 
@@ -27,6 +27,14 @@ ruleset temperature_store {
 		fired {
 			ent:threshold_violations := ent:threshold_violations.defaultsTo([]);
 			ent:threshold_violations := ent:threshold_violations.append(to_add).klog("VIOLATIONS:")
+		}
+	}
+
+	rule clear_temperatures {
+		select when sensor reading_reset
+		fired {
+			ent:readings := [];
+			ent:threshold_violations := []
 		}
 	}
 

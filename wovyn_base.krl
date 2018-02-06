@@ -13,8 +13,8 @@ ruleset wovyn_base {
 		__testing = {
 			"events": [
 				{
-					"domain": "wovyn",
-					"type": "heartbeat",
+					"domain": "sensor",
+					"type": "reading_reset",
 					"attrs": []
 				}
 			]
