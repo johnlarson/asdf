@@ -2,13 +2,17 @@ ruleset temperature_store {
 	
 	meta {
 		name "Temperature Store"
-		provides temperatures
+		provides temperatures, threshold_violations
 	}
 
 	global {
 
 		temperatures = function() {
-			{"readings": ent:readings}
+			ent:readings
+		}
+
+		threshold_violations = function() {
+			ent:threshold_violations
 		}
 
 	}
@@ -22,7 +26,7 @@ ruleset temperature_store {
 		}
 		fired {
 			ent:readings := ent:readings.defaultsTo([]);
-			ent:readings := ent:readings.append(to_add).klog("READIngs")
+			ent:readings := ent:readings.append(to_add)
 		}
 	}
 
@@ -35,7 +39,7 @@ ruleset temperature_store {
 		}
 		fired {
 			ent:threshold_violations := ent:threshold_violations.defaultsTo([]);
-			ent:threshold_violations := ent:threshold_violations.append(to_add).klog("VIOLATIONS:")
+			ent:threshold_violations := ent:threshold_violations.append(to_add)
 		}
 	}
 
