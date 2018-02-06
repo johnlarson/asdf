@@ -7,16 +7,13 @@ ruleset temperature_store {
 	rule collect_temperatures {
 		select when wovyn new_temperature_reading
 		pre {
-			temp = event:attr("temperature").klog("TEMP")
+			temp = event:attr("temperature")
 			time = event:attr("timestamp")
+			to_add = [{"temperature": temp, "timestamp": time}];
 		}
-		send_directive("hmmm", {})
 		fired {
-			to_add = {"temperature": temp, "timestamp": time};
-			to_add = [to_add].klog("MMM");
-			ent:readings := ent:readings.defaultsTo([]).klog("readings");
-			ent:readings := ent:readings.append(to_add);
-			a = ent:readings.klog("READINGS")
+			ent:readings := ent:readings.defaultsTo([]);
+			ent:readings := ent:readings.append(to_add)
 		}
 	}
 
