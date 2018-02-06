@@ -19,7 +19,7 @@ ruleset wovyn_base {
 				}
 			]
 		}
-		TEMPERATURE_THRESHOLD = 1
+		TEMPERATURE_THRESHOLD = 100
 	}
 
 	rule process_heartbeat {
