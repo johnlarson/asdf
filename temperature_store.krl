@@ -3,7 +3,7 @@ ruleset temperature_store {
 	meta {
 		name "Temperature Store"
 		provides temperatures, threshold_violations, inrange_temperatures
-		shares temperatures, threshold_violations, inrange_temperatures
+		shares temperatures, threshold_violations, inrange_temperatures, __testing
 	}
 
 	global {
@@ -19,6 +19,23 @@ ruleset temperature_store {
 		inrange_temperatures = function() {
 			v = threshold_violations();
 			temperatures().filter(function(x) { not(v >< x) })
+		}
+
+		__testing = {
+			"queries": [
+				{
+					"name": "temperatures",
+					"args": []
+				},
+				{
+					"name": "threshold_violations",
+					"args": []
+				},
+				{
+					"name": "inrange_temperatures",
+					"args": []
+				}
+			]
 		}
 
 	}
