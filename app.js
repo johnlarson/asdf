@@ -1,13 +1,15 @@
 "use strict";
 
+updateLoop();
 
-update()
-
+function updateLoop() {
+	console.log('Update.');
+	update();
+	setTimeout(updateLoop, 2500);
+}
 
 function update() {
 	Promise.all([getTemperatures(), getViolations()]).then(([temps, violations]) => {
-		console.log('temps:', temps);
-		console.log('violations:', violations)
 		updateCurrentTemp(temps[temps.length - 1].temperature);
 		updateTempsList(temps, violations);
 	});
@@ -34,14 +36,13 @@ function updateTempsList(temps, violations) {
 	for(let temp of temps) {
 		const tooHot = violationTimes.has(temp.timestamp);
 		const cls = tooHot ? 'violation' : '';
-		const item = $(`<li class="${cls}">${temp.timestamp} -- ${temp.temperature} °F</li>`)
+		const item = $(`<li class="${cls}">${temp.timestamp} -- ${temp.temperature} °F</li>`);
 		$('#log-list').append(item);
 	}
 }
 
 function query(ruleset, name, args = {}) {
 	const url = `http://localhost:8080/sky/cloud/JmspudNCA3yuqKsGjWW7ky/${ruleset}/${name}/`;
-	console.log('url:', url)
 	return $.ajax({
 		url: url,
 	});
