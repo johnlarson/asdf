@@ -6,6 +6,7 @@ ruleset wovyn_base {
 		use module twilio with
 			sid = keys:twilio{"sid"} and
 			auth_token = keys:twilio{"auth_token"}
+		use module sensor_profile
 		shares __testing
 	}
 
@@ -41,7 +42,8 @@ ruleset wovyn_base {
 		select when wovyn new_temperature_reading
 		pre {
 			temp = event:attr("temperature")
-			too_hot = temp > TEMPERATURE_THRESHOLD
+			threshold = sensor_profile:profile()["threshold"].decode()
+			too_hot = temp > threshold
 		}
 		send_directive("temp_threshold", {"threshold_violation": too_hot})
 		fired {

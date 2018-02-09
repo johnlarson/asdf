@@ -15,6 +15,7 @@ $(() => {
 		e.preventDefault();
 		const form = $(e.currentTarget);
 		const url = `${form.attr('action')}?${form.serialize()}`;
+		console.log(url);
 		$.ajax(url);
 	});
 

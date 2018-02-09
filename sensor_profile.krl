@@ -3,6 +3,7 @@ ruleset sensor_profile {
 	meta {
 		name "profile"
 		shares __testing, profile
+		provides profile
 	}
 
 	global {
