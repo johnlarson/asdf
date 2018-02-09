@@ -5,7 +5,7 @@ updateLoop();
 function updateLoop() {
 	console.log('Update.');
 	update();
-	setTimeout(updateLoop, 4000);
+	setTimeout(updateLoop, 2000);
 }
 
 function update() {
