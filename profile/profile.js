@@ -11,4 +11,11 @@ $(() => {
 		$('#phone-form').val(profile.phone);
 	});
 
+	$('form').on('submit', e => {
+		e.preventDefault();
+		const form = $(e.currentTarget);
+		const url = `${form.attr('action')}?${form.serialize()}`;
+		$.ajax(url);
+	});
+
 });
