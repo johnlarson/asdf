@@ -20,7 +20,6 @@ ruleset wovyn_base {
 				}
 			]
 		}
-		TEMPERATURE_THRESHOLD = 100
 	}
 
 	rule process_heartbeat {
@@ -42,7 +41,7 @@ ruleset wovyn_base {
 		select when wovyn new_temperature_reading
 		pre {
 			temp = event:attr("temperature")
-			threshold = sensor_profile:profile()["threshold"].decode()
+			threshold = sensor_profile:profile()["threshold"].defaultsTo(100)
 			too_hot = temp > threshold
 		}
 		send_directive("temp_threshold", {"threshold_violation": too_hot})

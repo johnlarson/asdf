@@ -2,6 +2,7 @@ ruleset sensor_profile {
 
 	meta {
 		name "profile"
+		use module secrets
 		shares __testing, profile
 		provides profile
 	}
@@ -41,7 +42,7 @@ ruleset sensor_profile {
 		pre {
 			location = event:attr("location")
 			name = event:attr("name")
-			threshold = event:attr("threshold")
+			threshold = event:attr("threshold").decode()
 			phone = event:attr("phone")
 		}
 

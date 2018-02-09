@@ -33,6 +33,7 @@ function updateTempsList(temps, violations) {
 		violationTimes.add(violation.timestamp);
 	}
 	$('#log-list').empty();
+	temps = temps.reverse();
 	for(let temp of temps) {
 		const tooHot = violationTimes.has(temp.timestamp);
 		const cls = tooHot ? 'violation' : '';
