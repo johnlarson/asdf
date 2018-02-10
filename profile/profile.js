@@ -16,7 +16,7 @@ $(() => {
 		const form = $(e.currentTarget);
 		const url = `${form.attr('action')}?${form.serialize()}`;
 		console.log(url);
-		$.ajax(url);
+		$.ajax(url).then(() => location.reload());
 	});
 
 });
