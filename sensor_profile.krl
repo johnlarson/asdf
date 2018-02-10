@@ -2,7 +2,6 @@ ruleset sensor_profile {
 
 	meta {
 		name "profile"
-		use module secrets
 		shares __testing, profile
 		provides profile
 	}
