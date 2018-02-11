@@ -23,7 +23,12 @@ ruleset manage_sensors {
 		select when sensor new_sensor
 		pre {
 			a = "asdf"
-			a = a.klog("HM?")
+			a = a.klog("ABC")
+		}
+		fired {
+			a = a.klog("DEF");
+			raise pico event "new_child_request"
+				attributes { "dname": "a", "color": "#FF69B4" }
 		}
 		
 	}
