@@ -13,6 +13,11 @@ ruleset manage_sensors {
 					"domain": "sensor",
 					"type": "new_sensor",
 					"attrs": []
+				},
+				{
+					"domain": "sensor",
+					"type": "clear_sensors",
+					"attrs": []
 				}
 			]
 		}
@@ -43,16 +48,18 @@ ruleset manage_sensors {
 	rule sensor_created {
 		select when wrangler child_initialized
 		pre {
-			sensor = event:attr("new_child").klog("SENSOR")
+			sensor = event:attrs().klog("ATTRS")
 		}
 		event:send({
-			"eci": sensor.eci,
+			"eci": sensor{"eci"},
 			"eid": "install_ruleset",
 			"domain": "pico",
 			"type": "new_ruleset",
 			"attrs": {
-				"rid": "wovyn_base"
-
+				"rids": [
+					"temperature_store",
+					"sensor_profile"
+				]
 			}
 		})
 		fired {
