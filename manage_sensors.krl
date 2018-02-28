@@ -63,8 +63,19 @@ ruleset manage_sensors {
 			}
 		})
 		fired {
+			a = sensor.klog("FIRED");
 			ent:sensors := ent:sensors.defaultsTo({});
 			ent:sensors{sensor{"id"}} := sensor
+		}
+	}
+
+	rule initialize_profile {
+		select when pico ruleset_added where event:attr("rids") >< "sensor_profile"
+		pre {
+			a = event:attrs().klog("INIT ATTRS")
+		}
+		fired {
+			a = a.klog()
 		}
 	}
 
