@@ -32,8 +32,15 @@ ruleset manage_sensors {
 		}
 		fired {
 			a = a.klog("DEF");
-			raise pico event "new_child_request"
-				attributes { "color": "#FF69B4" };
+			raise wrangler event "child_creation"
+				attributes {
+					"color": "#FF69B4",
+					"rids": [
+						"temperature_store",
+						"wovyn_base",
+						"sensor_profile"
+					]
+				};
 		}
 		
 	}
@@ -50,22 +57,11 @@ ruleset manage_sensors {
 		pre {
 			sensor = event:attrs().klog("ATTRS")
 		}
-		event:send({
-			"eci": sensor{"eci"},
-			"eid": "install_ruleset",
-			"domain": "pico",
-			"type": "new_ruleset",
-			"attrs": {
-				"rids": [
-					"temperature_store",
-					"sensor_profile"
-				]
-			}
-		})
 		fired {
 			a = sensor.klog("FIRED");
 			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{sensor{"id"}} := sensor
+			ent:sensors{sensor{"id"}} := sensor;
+			ent:sensors.klog("SENSERS")
 		}
 	}
 
