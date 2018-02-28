@@ -21,6 +21,8 @@ ruleset manage_sensors {
 				}
 			]
 		}
+
+		DEFAULT_THRESHOLD = 100
 	
 	}
 
@@ -57,11 +59,21 @@ ruleset manage_sensors {
 		pre {
 			sensor = event:attrs().klog("ATTRS")
 		}
+		event:send({
+			"eci": sensor{"eci"},
+			"eid": "init_profile",
+			"domain": "sensor",
+			"type": "profile_updated",
+			"attrs": {
+				"location": "HELLO"
+			}
+		})
 		fired {
 			a = sensor.klog("FIRED");
 			ent:sensors := ent:sensors.defaultsTo({});
 			ent:sensors{sensor{"id"}} := sensor;
 			ent:sensors.klog("SENSERS")
+
 		}
 	}
 

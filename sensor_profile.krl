@@ -39,7 +39,7 @@ ruleset sensor_profile {
 		select when sensor profile_updated
 
 		pre {
-			location = event:attr("location")
+			location = event:attr("location").klog("LOC")
 			name = event:attr("name")
 			threshold = event:attr("threshold").decode()
 			phone = event:attr("phone")
