@@ -2,6 +2,7 @@ ruleset manage_sensors {
 	
 	meta {
 		name "Manage Sensors"
+		use module secrets
 		shares __testing
 	}
 
@@ -59,31 +60,12 @@ ruleset manage_sensors {
 		pre {
 			sensor = event:attrs().klog("ATTRS")
 		}
-		event:send({
-			"eci": sensor{"eci"},
-			"eid": "init_profile",
-			"domain": "sensor",
-			"type": "profile_updated",
-			"attrs": {
-				"location": "HELLO"
-			}
-		})
 		fired {
 			a = sensor.klog("FIRED");
 			ent:sensors := ent:sensors.defaultsTo({});
 			ent:sensors{sensor{"id"}} := sensor;
 			ent:sensors.klog("SENSERS")
 
-		}
-	}
-
-	rule initialize_profile {
-		select when pico ruleset_added where event:attr("rids") >< "sensor_profile"
-		pre {
-			a = event:attrs().klog("INIT ATTRS")
-		}
-		fired {
-			a = a.klog()
 		}
 	}
 

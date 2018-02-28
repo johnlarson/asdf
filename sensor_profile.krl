@@ -54,4 +54,19 @@ ruleset sensor_profile {
 
 	}
 
+	rule initialize_profile {
+		select when wrangler ruleset_added where rids >< "sensor_profile"
+		pre {
+			a = event:attrs().klog("INIT ATTRS")
+		}
+		fired {
+			raise sensor event "profile_updated"
+				attributes {
+					"name": sensor{"name"},
+					"phone": secrets:my_number,
+					"threshold": DEFAULT_THRESHOLD
+				}
+		}
+	}
+
 }
