@@ -13,7 +13,7 @@ ruleset manage_sensors {
 				{
 					"domain": "sensor",
 					"type": "new_sensor",
-					"attrs": []
+					"attrs": ["name"]
 				},
 				{
 					"domain": "sensor",
@@ -29,20 +29,15 @@ ruleset manage_sensors {
 
 	rule new_sensor {
 		select when sensor new_sensor
-		pre {
-			a = "asdf"
-			a = a.klog("ABC")
-		}
 		fired {
-			a = a.klog("DEF");
 			raise wrangler event "child_creation"
 				attributes {
-					"color": "#FF69B4",
 					"rids": [
 						"temperature_store",
 						"wovyn_base",
 						"sensor_profile"
-					]
+					],
+					"name": event:attrs()
 				};
 		}
 		
@@ -58,14 +53,11 @@ ruleset manage_sensors {
 	rule sensor_created {
 		select when wrangler child_initialized
 		pre {
-			sensor = event:attrs().klog("ATTRS")
+			sensor = event:attrs()
 		}
 		fired {
-			a = sensor.klog("FIRED");
 			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{sensor{"id"}} := sensor;
-			ent:sensors.klog("SENSERS")
-
+			ent:sensors{sensor{"id"}} := sensor
 		}
 	}
 

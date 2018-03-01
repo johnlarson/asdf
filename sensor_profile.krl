@@ -2,6 +2,7 @@ ruleset sensor_profile {
 
 	meta {
 		name "profile"
+		use module secrets
 		shares __testing, profile
 		provides profile
 	}
@@ -39,7 +40,6 @@ ruleset sensor_profile {
 		select when sensor profile_updated
 
 		pre {
-			location = event:attr("location").klog("LOC")
 			name = event:attr("name")
 			threshold = event:attr("threshold").decode()
 			phone = event:attr("phone")
@@ -57,7 +57,7 @@ ruleset sensor_profile {
 	rule initialize_profile {
 		select when wrangler ruleset_added where rids >< "sensor_profile"
 		pre {
-			a = event:attrs().klog("INIT ATTRS")
+			sensor = event:attrs().klog("ATTRS")
 		}
 		fired {
 			raise sensor event "profile_updated"
