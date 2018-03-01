@@ -63,7 +63,6 @@ ruleset manage_sensors {
 		pre {
 			name = event:attr("name")
 			sensor = {
-				"name": event:attr("name"),
 				"id": event:attr("id"),
 				"eci": event:attr("eci"),
 				"parent_eci": event:attr("parent_eci")
