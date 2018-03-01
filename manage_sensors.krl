@@ -25,6 +25,11 @@ ruleset manage_sensors {
 					"domain": "sensor",
 					"type": "clear_sensors",
 					"attrs": []
+				},
+				{
+					"domain": "sensor",
+					"type": "unneeded_sensor",
+					"attrs": ["name"]
 				}
 			]
 		}
@@ -51,10 +56,16 @@ ruleset manage_sensors {
 		
 	}
 
-	rule clear_sensors {
-		select when sensor clear_sensors
+	rule delete_sensor {
+		select when sensor unneeded_sensor
+		pre {
+			name = event:attr("name")
+		}
+		send_directive("deleting_sensor", {"name": name})
 		fired {
-			ent:sensors := {}
+			raise wrangler event "child_deletion"
+				attributes {"name": name};
+			clear ent:sensors{name}
 		}
 	}
 
