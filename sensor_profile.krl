@@ -34,6 +34,8 @@ ruleset sensor_profile {
 			}
 		}
 
+		DEFAULT_THRESHOLD = 100
+
 	}
 	
 	rule update {
@@ -57,12 +59,12 @@ ruleset sensor_profile {
 	rule initialize_profile {
 		select when wrangler ruleset_added where rids >< "sensor_profile"
 		pre {
-			sensor = event:attrs().klog("ATTRS")
+			name = event:attr("rs_attrs"){"name"}
 		}
 		fired {
 			raise sensor event "profile_updated"
 				attributes {
-					"name": sensor{"name"},
+					"name": name,
 					"phone": secrets:my_number,
 					"threshold": DEFAULT_THRESHOLD
 				}

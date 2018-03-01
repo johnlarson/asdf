@@ -22,8 +22,6 @@ ruleset manage_sensors {
 				}
 			]
 		}
-
-		DEFAULT_THRESHOLD = 100
 	
 	}
 
@@ -37,7 +35,7 @@ ruleset manage_sensors {
 						"wovyn_base",
 						"sensor_profile"
 					],
-					"name": event:attrs()
+					"name": event:attr("name")
 				};
 		}
 		
