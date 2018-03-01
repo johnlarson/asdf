@@ -3,12 +3,18 @@ ruleset manage_sensors {
 	meta {
 		name "Manage Sensors"
 		use module secrets
-		shares __testing
+		shares __testing, sensors
 	}
 
 	global {
 
 		__testing = {
+			"queries": [
+				{
+					"name": "sensors",
+					"args": []
+				}
+			],
 			"events": [
 				{
 					"domain": "sensor",
@@ -21,6 +27,10 @@ ruleset manage_sensors {
 					"attrs": []
 				}
 			]
+		}
+
+		sensors = function() {
+			ent:sensors
 		}
 	
 	}
@@ -51,11 +61,16 @@ ruleset manage_sensors {
 	rule sensor_created {
 		select when wrangler child_initialized
 		pre {
-			sensor = event:attrs()
+			id = event:attr("id")
+			sensor = {
+				"name": event:attr("name"),
+				"eci": event:attr("eci"),
+				"parent_eci": event:attr("parent_eci")
+			}
 		}
 		fired {
 			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{sensor{"id"}} := sensor
+			ent:sensors{id} := sensor
 		}
 	}
 
