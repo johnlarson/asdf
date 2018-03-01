@@ -61,16 +61,17 @@ ruleset manage_sensors {
 	rule sensor_created {
 		select when wrangler child_initialized
 		pre {
-			id = event:attr("id")
+			name = event:attr("name")
 			sensor = {
 				"name": event:attr("name"),
+				"id": event:attr("id"),
 				"eci": event:attr("eci"),
 				"parent_eci": event:attr("parent_eci")
 			}
 		}
 		fired {
 			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{id} := sensor
+			ent:sensors{name} := sensor
 		}
 	}
 
