@@ -41,7 +41,7 @@ ruleset manage_sensors {
 	}
 
 	rule new_sensor {
-		select when sensor new_sensor
+		select when sensor new_sensor where not(ent:sensors >< name)
 		fired {
 			raise wrangler event "child_creation"
 				attributes {
