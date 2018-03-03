@@ -53,7 +53,6 @@ ruleset manage_sensors {
 					"name": event:attr("name")
 				};
 		}
-		
 	}
 
 	rule delete_sensor {
