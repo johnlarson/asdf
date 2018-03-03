@@ -35,7 +35,7 @@ ruleset manage_sensors {
 		}
 
 		sensors = function() {
-			ent:sensors
+			ent:sensors.defaultsTo({})
 		}
 	
 	}

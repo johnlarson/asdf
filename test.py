@@ -1,5 +1,6 @@
 import json
 import unittest
+from time import sleep
 
 import requests
 
@@ -32,18 +33,34 @@ class Tests(unittest.TestCase):
     def setUp(self):
         self.root = Pico(ROOT_CHANNEL)
         r = self.root.fire('wrangler:child_creation', name='test_manager')
+        print(r['directives'][0]['options'])
         self.manager = Pico(r['directives'][0]['options']['pico']['eci'])
         self.manager.fire('wrangler:install_rulesets_requested',
                           rids='manage_sensors')
 
     def tearDown(self):
         self.root.fire('wrangler:child_deletion', name='test_manager')
+        sleep(0.01)
 
     def test_create_delete(self):
         """Tests sensor create and delete functionality."""
-        #self.manager.fire('sensor:new_sensor', name='a')
-        #print(self.manager.get('manage_sensors:sensors'))
-        ...
+        self.assertEqual(self.manager.get('manage_sensors:sensors'), {})
+        self.manager.fire('sensor:new_sensor', name='a')
+        self.manager.fire('sensor:new_sensor', name='b')
+        self.manager.fire('sensor:new_sensor', name='c')
+        sensors = self.manager.get('manage_sensors:sensors')
+        keys = sensors.keys()
+        self.assertIn('a', keys)
+        self.assertIn('b', keys)
+        self.assertIn('c', keys)
+        a = sensors['a']
+        self.assertIn('eci', a.keys())
+        self.assertTrue(isinstance(a['eci'], str))
+        self.manager.fire('sensor:unneeded_sensor', name='b')
+        keys = self.manager.get('manage_sensors:sensors').keys()
+        self.assertIn('a', keys)
+        self.assertNotIn('b', keys)
+        self.assertIn('c', keys)
 
     def test_sensor_new_temperature_event(self):
         """
