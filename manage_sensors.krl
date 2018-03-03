@@ -23,13 +23,13 @@ ruleset manage_sensors {
 				},
 				{
 					"domain": "sensor",
-					"type": "clear_sensors",
-					"attrs": []
+					"type": "unneeded_sensor",
+					"attrs": ["name"]
 				},
 				{
 					"domain": "sensor",
-					"type": "unneeded_sensor",
-					"attrs": ["name"]
+					"type": "clear_sensors",
+					"attrs": []
 				}
 			]
 		}
@@ -37,6 +37,8 @@ ruleset manage_sensors {
 		sensors = function() {
 			ent:sensors.defaultsTo({})
 		}
+
+		DEFAULT_THRESHOLD = 100
 	
 	}
 
@@ -58,7 +60,7 @@ ruleset manage_sensors {
 	rule delete_sensor {
 		select when sensor unneeded_sensor
 		pre {
-			name = event:attr("name")
+			name = event:attr("name").klog("NAME")
 		}
 		send_directive("deleting_sensor", {"name": name})
 		fired {
@@ -68,7 +70,7 @@ ruleset manage_sensors {
 		}
 	}
 
-	rule sensor_created {
+	rule add_sensor_to_database {
 		select when wrangler child_initialized
 		pre {
 			name = event:attr("name")
@@ -81,6 +83,32 @@ ruleset manage_sensors {
 		fired {
 			ent:sensors := ent:sensors.defaultsTo({});
 			ent:sensors{name} := sensor
+		}
+	}
+
+	rule initialize_profile {
+		select when wrangler child_initialized 
+		pre {
+			name = event:attr("rs_attrs"){"name"}
+		}
+		event:send({
+			"eci": event:attr("eci"),
+			"domain": "sensor",
+			"type": "profile_updated",
+			"attrs": {
+				"name": name,
+				"phone": secrets:my_number,
+				"threshold": DEFAULT_THRESHOLD
+			}
+		})
+	}
+
+	rule clear_all {
+		select when sensor clear_sensors
+		foreach ent:sensors setting (sensor, name)
+		fired {
+			raise sensor event "unneeded_sensor"
+				attributes {"name": name}
 		}
 	}
 
