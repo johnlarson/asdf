@@ -17,15 +17,51 @@ ruleset wovyn_base {
 					"domain": "sensor",
 					"type": "reading_reset",
 					"attrs": []
+				},
+				{
+					"domain": "wovyn",
+					"type": "fake_heartbeat",
+					"attrs": ["temperature"]
+				},
+				{
+					"domain": "wovyn",
+					"type": "heartbeat",
+					"attrs": ["data"]
 				}
 			]
 		}
 	}
 
+	rule fake_heartbeat {
+		select when wovyn fake_heartbeat
+		pre {
+			genericThing = {
+				"data": {
+					"temperature": [
+						{
+							"temperatureF": event:attr("temperature")
+						}
+					]
+				}
+			}
+		}
+		fired {
+			raise wovyn event "heartbeat"
+				attributes {
+					"genericThing": genericThing
+				}
+		}
+	}
+
+	rule hmmm {
+		select when wovyn heartbeat
+		send_directive("HELLO", event:attrs())
+	}
+
 	rule process_heartbeat {
 		select when wovyn heartbeat where event:attr("genericThing")
 		pre {
-			generic = event:attr("genericThing")
+			generic = event:attr("genericThing").klog()
 		}
 		send_directive("heartbeat", generic)
 		fired {

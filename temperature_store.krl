@@ -9,11 +9,11 @@ ruleset temperature_store {
 	global {
 
 		temperatures = function() {
-			ent:readings
+			ent:readings.defaultsTo([])
 		}
 
 		threshold_violations = function() {
-			ent:threshold_violations
+			ent:threshold_violations.defaultsTo([])
 		}
 
 		inrange_temperatures = function() {

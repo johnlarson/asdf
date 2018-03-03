@@ -43,6 +43,7 @@ ruleset sensor_profile {
 			name = event:attr("name")
 			threshold = event:attr("threshold").decode()
 			phone = event:attr("phone")
+			location = event:attr("location")
 		}
 
 		fired {
