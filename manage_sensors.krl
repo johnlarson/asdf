@@ -3,7 +3,8 @@ ruleset manage_sensors {
 	meta {
 		name "Manage Sensors"
 		use module secrets
-		shares __testing, sensors
+		use module sky
+		shares __testing, sensors, temperatures
 	}
 
 	global {
@@ -12,6 +13,10 @@ ruleset manage_sensors {
 			"queries": [
 				{
 					"name": "sensors",
+					"args": []
+				},
+				{
+					"name": "temperatures",
 					"args": []
 				}
 			],
@@ -36,6 +41,12 @@ ruleset manage_sensors {
 
 		sensors = function() {
 			ent:sensors.defaultsTo({})
+		}
+
+		temperatures = function() {
+			ent:sensors.map(function(v, k) {
+				sky:query(v{"eci"}, "temperature_store", "temperatures")
+			})
 		}
 
 		DEFAULT_THRESHOLD = 100

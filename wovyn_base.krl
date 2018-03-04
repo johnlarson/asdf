@@ -53,11 +53,6 @@ ruleset wovyn_base {
 		}
 	}
 
-	rule hmmm {
-		select when wovyn heartbeat
-		send_directive("HELLO", event:attrs())
-	}
-
 	rule process_heartbeat {
 		select when wovyn heartbeat where event:attr("genericThing")
 		pre {
