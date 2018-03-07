@@ -128,7 +128,9 @@ ruleset manage_sensors {
 				attributes {
 					"name": event:attr("name"),
 					"channel_type": "subscription",
-					"wellKnown_Tx": event:attr("eci")
+					"wellKnown_Tx": event:attr("eci"),
+					"Rx_role": "manager",
+					"Tx_role": "child_sensor"
 				}
 		}
 	}
