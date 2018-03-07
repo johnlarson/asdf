@@ -4,6 +4,7 @@ ruleset manage_sensors {
 		name "Manage Sensors"
 		use module secrets
 		use module sky
+		use module io.picolabs.subscription alias subscriptions
 		shares __testing, sensors, temperatures
 	}
 
@@ -40,7 +41,7 @@ ruleset manage_sensors {
 		}
 
 		sensors = function() {
-			ent:sensors.defaultsTo({})
+			subscriptions:established()
 		}
 
 		temperatures = function() {
