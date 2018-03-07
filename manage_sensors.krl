@@ -61,7 +61,8 @@ ruleset manage_sensors {
 					"rids": [
 						"temperature_store",
 						"wovyn_base",
-						"sensor_profile"
+						"sensor_profile",
+						"io.picolabs.subscription"
 					],
 					"name": event:attr("name")
 				};
@@ -112,6 +113,18 @@ ruleset manage_sensors {
 				"threshold": DEFAULT_THRESHOLD
 			}
 		})
+	}
+
+	rule subscribe_to_sensor {
+		select when wrangler child_initialized
+		fired {
+			raise wrangler event "subscription"
+				attributes {
+					"name": event:attr("name"),
+					"channel_type": "subscription",
+					"wellKnown_Tx": event:attr("eci")
+				}
+		}
 	}
 
 	rule clear_all {

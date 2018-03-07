@@ -88,4 +88,15 @@ ruleset wovyn_base {
 		twilio:send(secrets:my_number, secrets:twilio_number, "Too hot!")
 	}
 
+	rule accept_parent_subscription {
+		select when wrangler inbound_pending_subscription_added
+		pre {
+			a = event:attrs.klog("ACCEPT!!!")
+		}
+		fired {
+			raise wrangler event "pending_subscription_approval"
+				attributes event:attrs
+		}
+	}
+
 }
