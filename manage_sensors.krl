@@ -49,6 +49,10 @@ ruleset manage_sensors {
 			})
 		}
 
+		is_child_sensor = function(name) {
+			ent:sensors >< name
+		}
+
 		DEFAULT_THRESHOLD = 100
 	
 	}
@@ -66,6 +70,8 @@ ruleset manage_sensors {
 					],
 					"name": event:attr("name")
 				};
+			ent:sensors := ent:sensors.defaultsTo({});
+			ent:sensors{name} := {}
 		}
 	}
 
@@ -83,7 +89,7 @@ ruleset manage_sensors {
 	}
 
 	rule add_sensor_to_database {
-		select when wrangler child_initialized
+		select when wrangler child_initialized where is_child_sensor(name)
 		pre {
 			name = event:attr("name")
 			sensor = {
@@ -99,7 +105,7 @@ ruleset manage_sensors {
 	}
 
 	rule initialize_profile {
-		select when wrangler child_initialized 
+		select when wrangler child_initialized where is_child_sensor(name)
 		pre {
 			name = event:attr("rs_attrs"){"name"}
 		}
@@ -116,7 +122,7 @@ ruleset manage_sensors {
 	}
 
 	rule subscribe_to_sensor {
-		select when wrangler child_initialized
+		select when wrangler child_initialized where is_child_sensor(name)
 		fired {
 			raise wrangler event "subscription"
 				attributes {
