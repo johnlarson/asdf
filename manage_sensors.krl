@@ -5,7 +5,7 @@ ruleset manage_sensors {
 		use module secrets
 		use module sky
 		use module io.picolabs.subscription alias subscriptions
-		shares __testing, sensors, temperatures
+		shares __testing, sensors, temperatures, get_channel
 	}
 
 	global {
@@ -19,6 +19,10 @@ ruleset manage_sensors {
 				{
 					"name": "temperatures",
 					"args": []
+				},
+				{
+					"name": "get_channel",
+					"args": ["name"]
 				}
 			],
 			"events": [
@@ -36,22 +40,38 @@ ruleset manage_sensors {
 					"domain": "sensor",
 					"type": "clear_sensors",
 					"attrs": []
+				},
+				{
+					"domain": "sensor",
+					"type": "clear_sensor_subscriptions",
+					"attrs": []
+				},
+				{
+					"domain": "manager",
+					"type": "clear_n2ch",
+					"attrs": []
 				}
 			]
 		}
 
 		sensors = function() {
-			subscriptions:established()
+			subscriptions:established("Tx_role", "child_sensor")
 		}
 
 		temperatures = function() {
-			ent:sensors.map(function(v, k) {
-				sky:query(v{"eci"}, "temperature_store", "temperatures")
-			})
+			sensors().reduce(function(a, b) {
+				channel = b{"Tx"};
+				temps = sky:query(channel, "temperature_store", "temperatures");
+				a.put([channel], temps)
+			}, {})
 		}
 
 		is_child_sensor = function(name) {
 			ent:sensors >< name
+		}
+
+		get_channel = function(name) {
+			ent:name_to_channel{name}
 		}
 
 		DEFAULT_THRESHOLD = 100
@@ -79,29 +99,24 @@ ruleset manage_sensors {
 	rule delete_sensor {
 		select when sensor unneeded_sensor
 		pre {
-			name = event:attr("name").klog("NAME")
+			name = event:attr("name")
 		}
 		send_directive("deleting_sensor", {"name": name})
 		fired {
 			raise wrangler event "child_deletion"
 				attributes {"name": name};
-			clear ent:sensors{name}
+			raise wrangler event "subscription_cancellation"
+				attributes {"Tx": ent:name_to_channel{name}};
+			clear ent:name_to_channel{name}
 		}
 	}
 
 	rule add_sensor_to_database {
-		select when wrangler child_initialized where is_child_sensor(name)
-		pre {
-			name = event:attr("name")
-			sensor = {
-				"id": event:attr("id"),
-				"eci": event:attr("eci"),
-				"parent_eci": event:attr("parent_eci")
-			}
-		}
+		select when manager child_sensor_subscribed where name
 		fired {
-			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{name} := sensor
+			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
+			event:attr("Tx");
+			ent:name_to_channel{name} := event:attr("Tx");
 		}
 	}
 
@@ -142,6 +157,24 @@ ruleset manage_sensors {
 		fired {
 			raise sensor event "unneeded_sensor"
 				attributes {"name": name}
+		}
+	}
+
+	rule clear_sensor_subscriptions {
+		select when sensor clear_sensor_subscriptions
+		foreach sensors().klog() setting (sensor)
+		fired {
+			raise wrangler event "subscription_cancellation"
+				attributes {
+					"Tx": sensor{"Tx"}
+				}
+		}
+	}
+
+	rule clear_name_to_channel {
+		select when manager clear_n2ch
+		fired {
+			ent:name_to_channel := null;
 		}
 	}
 

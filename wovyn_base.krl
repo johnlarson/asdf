@@ -56,7 +56,7 @@ ruleset wovyn_base {
 	rule process_heartbeat {
 		select when wovyn heartbeat where event:attr("genericThing")
 		pre {
-			generic = event:attr("genericThing").klog()
+			generic = event:attr("genericThing")
 		}
 		send_directive("heartbeat", generic)
 		fired {
@@ -90,13 +90,27 @@ ruleset wovyn_base {
 
 	rule accept_parent_subscription {
 		select when wrangler inbound_pending_subscription_added
-		pre {
-			a = event:attrs.klog("ACCEPT!!!")
-		}
 		fired {
 			raise wrangler event "pending_subscription_approval"
 				attributes event:attrs
 		}
+	}
+
+	rule notify_manager_subscription_added {
+		select when wrangler subscription_added
+		pre {
+			a = event:attr("name").klog("NAME")
+			a = event:attrs.klog("YOLO")
+		}
+		event:send({
+			"eci": event:attr("Tx"),
+			"domain": "manager",
+			"type": "child_sensor_subscribed",
+			"attrs": {
+				"name": event:attr("name").klog("NAME"),
+				"Tx": event:attr("Rx")
+			}
+		})
 	}
 
 }
