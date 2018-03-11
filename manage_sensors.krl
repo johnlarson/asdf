@@ -121,14 +121,21 @@ ruleset manage_sensors {
 		})
 	}
 
-	rule subscribe_to_sensor {
+	rule subscribe_to_sensor_on_initialized {
 		select when wrangler child_initialized
+		fired {
+			raise manager event "sensor_subscription_desired"
+				attributes {"Tx": event:attr("eci")}
+		}
+	}
+
+	rule subscribe_to_sensor {
+		select when manager sensor_subscription_desired
 		fired {
 			raise wrangler event "subscription"
 				attributes {
-					"name": event:attr("name"),
 					"channel_type": "subscription",
-					"wellKnown_Tx": event:attr("eci"),
+					"wellKnown_Tx": event:attr("Tx"),
 					"Rx_role": "manager",
 					"Tx_role": "child_sensor"
 				}

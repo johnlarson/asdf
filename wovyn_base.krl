@@ -7,6 +7,7 @@ ruleset wovyn_base {
 			sid = keys:twilio{"sid"} and
 			auth_token = keys:twilio{"auth_token"}
 		use module sensor_profile
+		use module io.picolabs.wrangler alias wrangler
 		shares __testing
 	}
 
@@ -98,7 +99,7 @@ ruleset wovyn_base {
 			"domain": "manager",
 			"type": "child_sensor_subscribed",
 			"attrs": {
-				"name": event:attr("name"),
+				"name": wrangler:myself(){"name"},
 				"Rx": event:attr("Tx"),
 				"Rx_role": event:attr("Tx_role"),
 				"Tx": event:attr("Rx"),
