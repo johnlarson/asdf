@@ -32,6 +32,16 @@ ruleset manage_sensors {
 					"attrs": ["name"]
 				},
 				{
+					"domain": "manager",
+					"type": "sensor_subscription_desired",
+					"attrs": ["Tx"]
+				},
+				{
+					"domain": "manager",
+					"type": "sensor_unsubscribe_desired",
+					"attrs": ["Rx"]
+				},
+				{
 					"domain": "sensor",
 					"type": "unneeded_sensor",
 					"attrs": ["name"]
@@ -81,6 +91,8 @@ ruleset manage_sensors {
 					],
 					"name": event:attr("name")
 				};
+			ent:children := ent:children.defaultsTo({});
+			ent:children{event:attr("name")} = true
 		}
 	}
 
@@ -88,14 +100,15 @@ ruleset manage_sensors {
 		select when sensor unneeded_sensor
 		pre {
 			name = event:attr("name");
+			Tx = ent:name_to_channel{name}
 		}
 		send_directive("deleting_sensor", {"name": name})
 		fired {
 			raise wrangler event "child_deletion"
 				attributes {"name": name};
-			raise wrangler event "subscription_cancellation"
-				attributes {"Rx": ent:name_to_channel{name}};
-			clear ent:name_to_channel{name}
+			raise manager event "sensor_unsubscribe_desired"
+				attributes {"Rx": Rx};
+			clear ent:children{name}
 		}
 	}
 
@@ -103,7 +116,9 @@ ruleset manage_sensors {
 		select when manager child_sensor_subscribed where event:attr("name")
 		fired {
 			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			ent:name_to_channel{event:attr("name")} := event:attr("Rx")
+			ent:name_to_channel{event:attr("name")} := event:attr("Rx");
+			ent:channel_to_name := ent:channel_to_name.defaultsTo({});
+			ent:channel_to_name{event:attr("Rx")} := event:attr("name")
 		}
 	}
 
@@ -142,9 +157,19 @@ ruleset manage_sensors {
 		}
 	}
 
+	rule unsubscribe_sensor {
+		select when manager sensor_unsubscribe_desired
+		fired {
+			raise wrangler event "subscription_cancellation"
+				attributes {"Rx": event:attr("Rx")};
+			clear ent:name_to_channel{ent:channel_to_name{event:attr("Rx")}};
+			clear ent:channel_to_name{event:attr("Rx")}
+		}
+	}
+
 	rule clear_all {
 		select when sensor clear_sensors
-		foreach ent:name_to_channel setting (sensor, name)
+		foreach ent:children setting (v, name)
 		fired {
 			raise sensor event "unneeded_sensor"
 				attributes {"name": name}
