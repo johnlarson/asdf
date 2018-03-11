@@ -100,10 +100,10 @@ ruleset manage_sensors {
 	}
 
 	rule add_sensor_to_database {
-		select when manager child_sensor_subscribed where name
+		select when manager child_sensor_subscribed where event:attr("name")
 		fired {
 			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			ent:name_to_channel{event:attr("name")} := event:attr("Rx");
+			ent:name_to_channel{event:attr("name")} := event:attr("Rx")
 		}
 	}
 
@@ -137,7 +137,7 @@ ruleset manage_sensors {
 
 	rule clear_all {
 		select when sensor clear_sensors
-		foreach ent:sensors setting (sensor, name)
+		foreach ent:name_to_channel setting (sensor, name)
 		fired {
 			raise sensor event "unneeded_sensor"
 				attributes {"name": name}
