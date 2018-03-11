@@ -169,11 +169,17 @@ ruleset manage_sensors {
 
 	rule clear_all {
 		select when sensor clear_sensors
-		foreach ent:children setting (v, name)
+		foreach ent:name_to_channel setting (channel, name)
+		if ent:children >< name then
+			noop()
 		fired {
 			raise sensor event "unneeded_sensor"
 				attributes {"name": name}
+		} else {
+			raise manager event "sensor_unsubscribe_desired"
+				attributes {"Rx": channel}
 		}
+
 	}
 
 }
