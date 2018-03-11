@@ -100,7 +100,9 @@ ruleset wovyn_base {
 			"attrs": {
 				"name": event:attr("name"),
 				"Rx": event:attr("Tx"),
-				"Tx": event:attr("Rx")
+				"Rx_role": event:attr("Tx_role"),
+				"Tx": event:attr("Rx"),
+				"Tx_role": event:attr("Rx_role")
 			}
 		})
 	}

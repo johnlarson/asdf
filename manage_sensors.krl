@@ -69,7 +69,7 @@ ruleset manage_sensors {
 	}
 
 	rule new_sensor {
-		select when sensor new_sensor where not(ent:name_to_channel >< name)
+		select when sensor new_sensor where not(is_child_sensor(name))
 		fired {
 			raise wrangler event "child_creation"
 				attributes {
@@ -108,16 +108,13 @@ ruleset manage_sensors {
 	}
 
 	rule initialize_profile {
-		select when wrangler child_initialized where is_child_sensor(name)
-		pre {
-			name = event:attr("rs_attrs"){"name"}
-		}
+		select when manager child_sensor_subscribed where event:attr("Tx_role") == "child_sensor"
 		event:send({
-			"eci": event:attr("eci"),
+			"eci": event:attr("Tx"),
 			"domain": "sensor",
 			"type": "profile_updated",
 			"attrs": {
-				"name": name,
+				"name": event:attr("name"),
 				"phone": secrets:my_number,
 				"threshold": DEFAULT_THRESHOLD
 			}
