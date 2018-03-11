@@ -67,7 +67,7 @@ ruleset manage_sensors {
 		}
 
 		is_child_sensor = function(name) {
-			ent:sensors >< name
+			ent:name_to_channel >< name
 		}
 
 		get_channel = function(name) {
@@ -79,7 +79,7 @@ ruleset manage_sensors {
 	}
 
 	rule new_sensor {
-		select when sensor new_sensor where not(ent:sensors >< name)
+		select when sensor new_sensor where not(ent:name_to_channel >< name)
 		fired {
 			raise wrangler event "child_creation"
 				attributes {
@@ -92,31 +92,34 @@ ruleset manage_sensors {
 					"name": event:attr("name")
 				};
 			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{name} := {}
+			ent:sensors{name} := event:attr("Rx")
 		}
 	}
 
 	rule delete_sensor {
 		select when sensor unneeded_sensor
 		pre {
-			name = event:attr("name")
+			name = event:attr("name").klog("A NAME!!")
+			ch = ent:name_to_channel.klog("A CHANNEL!!")
 		}
 		send_directive("deleting_sensor", {"name": name})
 		fired {
 			raise wrangler event "child_deletion"
 				attributes {"name": name};
 			raise wrangler event "subscription_cancellation"
-				attributes {"Tx": ent:name_to_channel{name}};
+				attributes {"Rx": ent:name_to_channel{name}};
 			clear ent:name_to_channel{name}
 		}
 	}
 
 	rule add_sensor_to_database {
-		select when manager child_sensor_subscribed where name
+		select when manager child_sensor_subscribed
 		fired {
 			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			event:attr("Tx");
-			ent:name_to_channel{name} := event:attr("Tx");
+			event:attr("name").klog("OTHER_NAME");
+			ent:name_to_channel{name} := event:attr("Rx").klog("OTHER RX:");
+			event:attr("Tx").klog("OTHER TX:");
+			ent:name_to_channel{event:attr("name")} := event:attr("Rx")
 		}
 	}
 
@@ -138,7 +141,7 @@ ruleset manage_sensors {
 	}
 
 	rule subscribe_to_sensor {
-		select when wrangler child_initialized where is_child_sensor(name)
+		select when wrangler child_initialized
 		fired {
 			raise wrangler event "subscription"
 				attributes {

@@ -101,13 +101,16 @@ ruleset wovyn_base {
 		pre {
 			a = event:attr("name").klog("NAME")
 			a = event:attrs.klog("YOLO")
+			a = event:attr("Tx").klog("THE TX:")
+			a = event:attr("Rx").klog("THE RX:")
 		}
 		event:send({
 			"eci": event:attr("Tx"),
 			"domain": "manager",
 			"type": "child_sensor_subscribed",
 			"attrs": {
-				"name": event:attr("name").klog("NAME"),
+				"name": event:attr("name"),
+				"Rx": event:attr("Tx"),
 				"Tx": event:attr("Rx")
 			}
 		})
