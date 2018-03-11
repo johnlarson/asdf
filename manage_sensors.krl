@@ -104,12 +104,8 @@ ruleset manage_sensors {
 	rule add_sensor_to_database {
 		select when manager child_sensor_subscribed where name
 		fired {
-			ent:name_to_channel.klog("N2Ch 1:");
 			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			ent:name_to_channel.klog("N2Ch 2:");
-			event:attr("name").klog("NAME:");
 			ent:name_to_channel{event:attr("name")} := event:attr("Rx");
-			ent:name_to_channel.klog("N2Ch 3:");
 		}
 	}
 
