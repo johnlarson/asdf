@@ -81,8 +81,6 @@ ruleset manage_sensors {
 					],
 					"name": event:attr("name")
 				};
-			ent:sensors := ent:sensors.defaultsTo({});
-			ent:sensors{name} := event:attr("Rx")
 		}
 	}
 
