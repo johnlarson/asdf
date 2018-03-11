@@ -40,16 +40,6 @@ ruleset manage_sensors {
 					"domain": "sensor",
 					"type": "clear_sensors",
 					"attrs": []
-				},
-				{
-					"domain": "sensor",
-					"type": "clear_sensor_subscriptions",
-					"attrs": []
-				},
-				{
-					"domain": "manager",
-					"type": "clear_n2ch",
-					"attrs": []
 				}
 			]
 		}
@@ -99,8 +89,7 @@ ruleset manage_sensors {
 	rule delete_sensor {
 		select when sensor unneeded_sensor
 		pre {
-			name = event:attr("name").klog("A NAME!!")
-			ch = ent:name_to_channel.klog("A CHANNEL!!")
+			name = event:attr("name");
 		}
 		send_directive("deleting_sensor", {"name": name})
 		fired {
@@ -113,13 +102,14 @@ ruleset manage_sensors {
 	}
 
 	rule add_sensor_to_database {
-		select when manager child_sensor_subscribed
+		select when manager child_sensor_subscribed where name
 		fired {
+			ent:name_to_channel.klog("N2Ch 1:");
 			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			event:attr("name").klog("OTHER_NAME");
-			ent:name_to_channel{name} := event:attr("Rx").klog("OTHER RX:");
-			event:attr("Tx").klog("OTHER TX:");
-			ent:name_to_channel{event:attr("name")} := event:attr("Rx")
+			ent:name_to_channel.klog("N2Ch 2:");
+			event:attr("name").klog("NAME:");
+			ent:name_to_channel{event:attr("name")} := event:attr("Rx");
+			ent:name_to_channel.klog("N2Ch 3:");
 		}
 	}
 
@@ -160,24 +150,6 @@ ruleset manage_sensors {
 		fired {
 			raise sensor event "unneeded_sensor"
 				attributes {"name": name}
-		}
-	}
-
-	rule clear_sensor_subscriptions {
-		select when sensor clear_sensor_subscriptions
-		foreach sensors().klog() setting (sensor)
-		fired {
-			raise wrangler event "subscription_cancellation"
-				attributes {
-					"Tx": sensor{"Tx"}
-				}
-		}
-	}
-
-	rule clear_name_to_channel {
-		select when manager clear_n2ch
-		fired {
-			ent:name_to_channel := null;
 		}
 	}
 

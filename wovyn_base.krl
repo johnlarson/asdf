@@ -22,11 +22,6 @@ ruleset wovyn_base {
 					"domain": "wovyn",
 					"type": "fake_heartbeat",
 					"attrs": ["temperature"]
-				},
-				{
-					"domain": "wovyn",
-					"type": "heartbeat",
-					"attrs": ["data"]
 				}
 			]
 		}
@@ -98,12 +93,6 @@ ruleset wovyn_base {
 
 	rule notify_manager_subscription_added {
 		select when wrangler subscription_added
-		pre {
-			a = event:attr("name").klog("NAME")
-			a = event:attrs.klog("YOLO")
-			a = event:attr("Tx").klog("THE TX:")
-			a = event:attr("Rx").klog("THE RX:")
-		}
 		event:send({
 			"eci": event:attr("Tx"),
 			"domain": "manager",
