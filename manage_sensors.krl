@@ -5,6 +5,7 @@ ruleset manage_sensors {
 		use module secrets
 		use module sky
 		use module io.picolabs.subscription alias subscriptions
+		use module io.picolabs.wrangler alias wrangler
 		shares __testing, sensors, temperatures, get_channel
 	}
 
@@ -19,10 +20,6 @@ ruleset manage_sensors {
 				{
 					"name": "temperatures",
 					"args": []
-				},
-				{
-					"name": "get_channel",
-					"args": ["name"]
 				}
 			],
 			"events": [
@@ -48,14 +45,19 @@ ruleset manage_sensors {
 				},
 				{
 					"domain": "sensor",
-					"type": "clear_sensors",
+					"type": "clear_all",
+					"attrs": []
+				},
+				{
+					"domain": "manager",
+					"type": "remove_subscriptions",
 					"attrs": []
 				}
 			]
 		}
 
 		sensors = function() {
-			subscriptions:established("Tx_role", "child_sensor")
+			subscriptions:established("Tx_role", "sensor")
 		}
 
 		temperatures = function() {
@@ -66,20 +68,15 @@ ruleset manage_sensors {
 			}, {})
 		}
 
-		is_child_sensor = function(name) {
-			ent:name_to_channel >< name
-		}
-
-		get_channel = function(name) {
-			ent:name_to_channel{name}
-		}
-
 		DEFAULT_THRESHOLD = 100
 	
 	}
 
 	rule new_sensor {
-		select when sensor new_sensor where not(is_child_sensor(name))
+		select when sensor new_sensor
+		pre {
+			name = event:attr("name")
+		}
 		fired {
 			raise wrangler event "child_creation"
 				attributes {
@@ -89,10 +86,9 @@ ruleset manage_sensors {
 						"sensor_profile",
 						"io.picolabs.subscription"
 					],
-					"name": event:attr("name")
+					"name": name,
+					"is_sensor": true
 				};
-			ent:children := ent:children.defaultsTo({});
-			ent:children{event:attr("name")} = true
 		}
 	}
 
@@ -100,30 +96,15 @@ ruleset manage_sensors {
 		select when sensor unneeded_sensor
 		pre {
 			name = event:attr("name");
-			Tx = ent:name_to_channel{name}
 		}
-		send_directive("deleting_sensor", {"name": name})
 		fired {
 			raise wrangler event "child_deletion"
 				attributes {"name": name};
-			raise manager event "sensor_unsubscribe_desired"
-				attributes {"Rx": Rx};
-			clear ent:children{name}
-		}
-	}
-
-	rule add_sensor_to_database {
-		select when manager child_sensor_subscribed where event:attr("name")
-		fired {
-			ent:name_to_channel := ent:name_to_channel.defaultsTo({});
-			ent:name_to_channel{event:attr("name")} := event:attr("Rx");
-			ent:channel_to_name := ent:channel_to_name.defaultsTo({});
-			ent:channel_to_name{event:attr("Rx")} := event:attr("name")
 		}
 	}
 
 	rule initialize_profile {
-		select when manager child_sensor_subscribed where event:attr("Tx_role") == "child_sensor"
+		select when manager child_sensor_subscribed where event:attr("Tx_role") == "sensor"
 		event:send({
 			"eci": event:attr("Tx"),
 			"domain": "sensor",
@@ -137,7 +118,7 @@ ruleset manage_sensors {
 	}
 
 	rule subscribe_to_sensor_on_initialized {
-		select when wrangler child_initialized
+		select when wrangler child_initialized where event:attr("rs_attrs"){"is_sensor"}
 		fired {
 			raise manager event "sensor_subscription_desired"
 				attributes {"Tx": event:attr("eci")}
@@ -152,7 +133,7 @@ ruleset manage_sensors {
 					"channel_type": "subscription",
 					"wellKnown_Tx": event:attr("Tx"),
 					"Rx_role": "manager",
-					"Tx_role": "child_sensor"
+					"Tx_role": "sensor"
 				}
 		}
 	}
@@ -162,24 +143,25 @@ ruleset manage_sensors {
 		fired {
 			raise wrangler event "subscription_cancellation"
 				attributes {"Rx": event:attr("Rx")};
-			clear ent:name_to_channel{ent:channel_to_name{event:attr("Rx")}};
-			clear ent:channel_to_name{event:attr("Rx")}
 		}
 	}
 
 	rule clear_all {
-		select when sensor clear_sensors
-		foreach ent:name_to_channel setting (channel, name)
-		if ent:children >< name then
-			noop()
+		select when sensor clear_all
+		foreach wrangler:children() setting (child)
 		fired {
 			raise sensor event "unneeded_sensor"
-				attributes {"name": name}
-		} else {
-			raise manager event "sensor_unsubscribe_desired"
-				attributes {"Rx": channel}
+				attributes {"name": child{"name"}}
 		}
+	}
 
+	rule remove_subscriptions {
+		select when manager remove_sensors
+		foreach wrangler:sensors() setting (subscription)
+		fired {
+			raise wrangler event "subscription_cancellation"
+				attributes {"Rx": subscription{"Rx"}}
+		}
 	}
 
 }
