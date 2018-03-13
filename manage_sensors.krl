@@ -38,20 +38,15 @@ ruleset manage_sensors {
 					"type": "sensor_unsubscribe_desired",
 					"attrs": ["Rx"]
 				},
+								{
+					"domain": "sensor",
+					"type": "nuke",
+					"attrs": []
+				},
 				{
 					"domain": "sensor",
 					"type": "unneeded_sensor",
 					"attrs": ["name"]
-				},
-				{
-					"domain": "sensor",
-					"type": "clear_all",
-					"attrs": []
-				},
-				{
-					"domain": "manager",
-					"type": "remove_subscriptions",
-					"attrs": []
 				}
 			]
 		}
@@ -146,6 +141,14 @@ ruleset manage_sensors {
 		}
 	}
 
+	rule nuke {
+		select when sensor nuke
+		fired {
+			raise sensor event "clear_all" attributes {};
+			raise manager event "remove_subscriptions" attributes {}
+		}
+	}
+
 	rule clear_all {
 		select when sensor clear_all
 		foreach wrangler:children() setting (child)
@@ -156,8 +159,8 @@ ruleset manage_sensors {
 	}
 
 	rule remove_subscriptions {
-		select when manager remove_sensors
-		foreach wrangler:sensors() setting (subscription)
+		select when manager remove_subscriptions
+		foreach sensors() setting (subscription)
 		fired {
 			raise wrangler event "subscription_cancellation"
 				attributes {"Rx": subscription{"Rx"}}
