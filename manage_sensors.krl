@@ -31,7 +31,7 @@ ruleset manage_sensors {
 				{
 					"domain": "manager",
 					"type": "sensor_subscription_desired",
-					"attrs": ["Tx"]
+					"attrs": ["Tx", "Tx_host"]
 				},
 				{
 					"domain": "manager",
@@ -41,6 +41,11 @@ ruleset manage_sensors {
 								{
 					"domain": "sensor",
 					"type": "nuke",
+					"attrs": []
+				},
+				{
+					"domain": "manager",
+					"type": "remove_subscriptions",
 					"attrs": []
 				},
 				{
@@ -126,6 +131,7 @@ ruleset manage_sensors {
 			raise wrangler event "subscription"
 				attributes {
 					"channel_type": "subscription",
+					"Tx_host": event:attr("Tx_host"),
 					"wellKnown_Tx": event:attr("Tx"),
 					"Rx_role": "manager",
 					"Tx_role": "sensor"
