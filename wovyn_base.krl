@@ -8,6 +8,7 @@ ruleset wovyn_base {
 			auth_token = keys:twilio{"auth_token"}
 		use module sensor_profile
 		use module io.picolabs.wrangler alias wrangler
+		use module io.picolabs.subscription alias subscriptions
 		shares __testing
 	}
 
@@ -81,7 +82,13 @@ ruleset wovyn_base {
 
 	rule threshold_notification {
 		select when wovyn threshold_violation
-		twilio:send(secrets:my_number, secrets:twilio_number, "Too hot!")
+		foreach subscriptions:established("Tx_role", "manager") setting (subscription)
+		event:send({
+			"eci": subscription{"Tx"},
+			"domain": "wovyn",
+			"type": "threshold_violation",
+			"attrs": event:attrs
+		})
 	}
 
 	rule accept_parent_subscription {
