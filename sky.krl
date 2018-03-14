@@ -6,9 +6,9 @@ ruleset sky {
 	}
 
 	global {
-		query = function(eci, mod, func, params) {
-			base_url = "http://localhost:8080/sky/cloud/";
-			url = base_url + eci + "/" + mod + "/" + func;
+		query = function(host, eci, mode, func, params) {
+			host = host.defaultsTo("http://localhost:8080/sky/cloud/");
+			url = base_url + eci + "/" + mode + "/" + func;
 			params = params.defaultsTo({}).put(["_eci"], eci);
 			response = http:get(url, params);
 			response{"content"}.decode()

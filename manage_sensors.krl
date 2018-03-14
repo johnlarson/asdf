@@ -62,8 +62,9 @@ ruleset manage_sensors {
 
 		temperatures = function() {
 			sensors().reduce(function(a, b) {
+				host = b{"Tx_host"}
 				channel = b{"Tx"};
-				temps = sky:query(channel, "temperature_store", "temperatures");
+				temps = sky:query(host, channel, "temperature_store", "temperatures");
 				a.put([channel], temps)
 			}, {})
 		}
