@@ -24,6 +24,11 @@ ruleset manage_sensors {
 			],
 			"events": [
 				{
+					"domain": "manager",
+					"type": "temp_report_needed",
+					"attrs": []
+				},
+				{
 					"domain": "sensor",
 					"type": "new_sensor",
 					"attrs": ["name"]
@@ -67,6 +72,10 @@ ruleset manage_sensors {
 				temps = sky:query(host, channel, "temperature_store", "temperatures");
 				a.put([channel], temps)
 			}, {})
+		}
+
+		next_cid = function() {
+			ent:next_cid.defaultsTo(0)
 		}
 
 		DEFAULT_THRESHOLD = 100
@@ -171,6 +180,25 @@ ruleset manage_sensors {
 		fired {
 			raise wrangler event "subscription_cancellation"
 				attributes {"Rx": subscription{"Rx"}}
+		}
+	}
+
+	rule notify_need_temperature_report {
+		select when manager temp_report_needed
+		foreach sensors() setting (sensor)
+		event:send({
+			"eci": sensor{"Tx"}.klog("TX"),
+			"host": sensor{"Tx_host"},
+			"domain": "sensor",
+			"type": "temp_report_needed",
+			"attrs": {
+				"cid": next_cid(),
+				"Tx": sensor{"Rx"},
+				"Tx_host": sensor{"Rx_host"}
+			}
+		})
+		fired {
+			ent:next_cid := ent:next_cid.defaultsTo(0) + 1
 		}
 	}
 

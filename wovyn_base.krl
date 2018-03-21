@@ -115,4 +115,11 @@ ruleset wovyn_base {
 		})
 	}
 
+	rule temperature_report {
+		select when sensor temp_report_needed
+		fired {
+			event:attrs.klog("ATTRS")
+		}
+	}
+
 }
