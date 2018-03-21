@@ -74,4 +74,23 @@ ruleset temperature_store {
 		}
 	}
 
+	rule temperature_report {
+		select when sensor temp_report_needed
+		event:send({
+			"eci": event:attr("Tx"),
+			"host": event:attr("Tx_host"),
+			"domain": "sensor",
+			"type": "report_generated",
+			"attrs": {
+				"cid": event:attr("cid"),
+				"temperatures": temperatures(),
+				"Tx": event:attr("Rx"),
+				"Tx_host": meta:host
+			}
+		})
+		fired {
+			event:attrs.klog("TEMPERATURE_STORE:TEMPERATURE_REPORT ATTRS:")
+		}
+	}
+
 }

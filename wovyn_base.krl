@@ -110,16 +110,10 @@ ruleset wovyn_base {
 				"Rx": event:attr("Tx"),
 				"Rx_role": event:attr("Tx_role"),
 				"Tx": event:attr("Rx"),
+				"Rx": event:attr("Tx"),
 				"Tx_role": event:attr("Rx_role")
 			}
 		})
-	}
-
-	rule temperature_report {
-		select when sensor temp_report_needed
-		fired {
-			event:attrs.klog("ATTRS")
-		}
 	}
 
 }

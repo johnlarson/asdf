@@ -74,10 +74,6 @@ ruleset manage_sensors {
 			}, {})
 		}
 
-		next_cid = function() {
-			ent:next_cid.defaultsTo(0)
-		}
-
 		DEFAULT_THRESHOLD = 100
 	
 	}
@@ -183,8 +179,17 @@ ruleset manage_sensors {
 		}
 	}
 
-	rule notify_need_temperature_report {
+	rule handle_need_temperature_report {
 		select when manager temp_report_needed
+		fired {
+			ent:next_cid := ent:next_cid.defaultsTo(0) + 1;
+			raise manager event "temp_report_cid_generated"
+				attributes {"cid": ent:next_cid}
+		}
+	}
+
+	rule notify_need_temperature_report {
+		select when manager temp_report_cid_generated
 		foreach sensors() setting (sensor)
 		event:send({
 			"eci": sensor{"Tx"}.klog("TX"),
@@ -192,14 +197,11 @@ ruleset manage_sensors {
 			"domain": "sensor",
 			"type": "temp_report_needed",
 			"attrs": {
-				"cid": next_cid(),
+				"cid": event:attr("cid"),
 				"Tx": sensor{"Rx"},
-				"Tx_host": sensor{"Rx_host"}
+				"Tx_host": meta:host
 			}
 		})
-		fired {
-			ent:next_cid := ent:next_cid.defaultsTo(0) + 1
-		}
 	}
 
 }
