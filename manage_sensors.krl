@@ -210,7 +210,7 @@ ruleset manage_sensors {
 		select when manager temp_report_cid_generated
 		foreach sensors() setting (sensor)
 		event:send({
-			"eci": sensor{"Tx"}.klog("TX"),
+			"eci": sensor{"Tx"},
 			"host": sensor{"Tx_host"},
 			"domain": "sensor",
 			"type": "temp_report_needed",
