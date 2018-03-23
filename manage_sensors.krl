@@ -183,6 +183,12 @@ ruleset manage_sensors {
 		select when manager temp_report_needed
 		fired {
 			ent:next_cid := ent:next_cid.defaultsTo(0) + 1;
+			ent:reports := ent:reports.defaultsTo({});
+			ent:reports{ent:next_cid} := {
+				"temperature_sensors": sensors().length(),
+				"responding": 0,
+				"temperatures": {}
+			};
 			raise manager event "temp_report_cid_generated"
 				attributes {"cid": ent:next_cid}
 		}
@@ -202,6 +208,20 @@ ruleset manage_sensors {
 				"Tx_host": meta:host
 			}
 		})
+	}
+
+	rule add_temperature_report {
+		select when sensor temp_report_generated
+		pre {
+			cid = event:attr("cid");
+			report = ent:reports{cid};
+			Tx = event:attr("Tx");
+			temps = event:attr("temperatures")
+		}
+		fired {
+			ent:reports{[cid, "responding"]} := report{"responding"} + 1;
+			ent:reports{[cid, "temperatures", Tx]} := temps
+		}
 	}
 
 }
