@@ -88,9 +88,6 @@ ruleset temperature_store {
 				"Tx_host": meta:host
 			}
 		})
-		fired {
-			event:attrs.klog("TEMPERATURE_STORE:TEMPERATURE_REPORT ATTRS:")
-		}
 	}
 
 }
