@@ -6,13 +6,17 @@ ruleset manage_sensors {
 		use module sky
 		use module io.picolabs.subscription alias subscriptions
 		use module io.picolabs.wrangler alias wrangler
-		shares __testing, sensors, temperatures, get_channel
+		shares __testing, sensors, temperatures, get_channel, latest_reports
 	}
 
 	global {
 
 		__testing = {
 			"queries": [
+				{
+					"name": "latest_reports",
+					"args": []
+				},
 				{
 					"name": "sensors",
 					"args": []
@@ -72,6 +76,14 @@ ruleset manage_sensors {
 				temps = sky:query(host, channel, "temperature_store", "temperatures");
 				a.put([channel], temps)
 			}, {})
+		}
+
+		latest_reports = function() {
+			ent:reports.keys().filter(function(x) {
+				x > ent:next_cid - 5
+			}).reduce(function(a, b) {
+				a.put([b], ent:reports{b})
+			}, {});
 		}
 
 		DEFAULT_THRESHOLD = 100
