@@ -80,7 +80,7 @@ ruleset temperature_store {
 			"eci": event:attr("Tx"),
 			"host": event:attr("Tx_host"),
 			"domain": "sensor",
-			"type": "report_generated",
+			"type": "temp_report_generated",
 			"attrs": {
 				"cid": event:attr("cid"),
 				"temperatures": temperatures(),

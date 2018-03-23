@@ -204,6 +204,7 @@ ruleset manage_sensors {
 			"type": "temp_report_needed",
 			"attrs": {
 				"cid": event:attr("cid"),
+				"Rx": sensor{"Tx"},
 				"Tx": sensor{"Rx"},
 				"Tx_host": meta:host
 			}
