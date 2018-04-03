@@ -99,6 +99,7 @@ ruleset manage_sensors {
 			raise wrangler event "child_creation"
 				attributes {
 					"rids": [
+						"gossip",
 						"temperature_store",
 						"wovyn_base",
 						"sensor_profile",
