@@ -25,18 +25,18 @@ ruleset gossip {
 	}
 
 	rule start_gossiping {
-		select when a b
+		select when wrangler ruleset_added where rids >< meta:rid
 	}
 
 	rule gossip {
-		select when a b
+		select when gossip heartbeat
 	}
 
 	rule receive_gossip {
-		select when a b
+		select when gossip rumor
 	}
 
 	rule add_subscription {
-		select when a b
+		select when gossip sub_request
 	}
 }
