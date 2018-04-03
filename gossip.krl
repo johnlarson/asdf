@@ -26,6 +26,9 @@ ruleset gossip {
 
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
+		fired {
+			raise gossip event "heartbeat"
+		}
 	}
 
 	rule gossip {
