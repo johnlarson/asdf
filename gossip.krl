@@ -6,6 +6,41 @@ ruleset gossip {
 
 	global {
 
+		__testing = {
+			"queries": [
+				{
+					"name": "getPeer",
+					"args": ["state"]
+				},
+				{
+					"name": "preparedMessage",
+					"args": ["state", "subscriber"]
+				}
+			],
+			"events": [
+				{
+					"domain": "gossip",
+					"type": "heartbeat",
+					"args": []
+				},
+				{
+					"domain": "gossip",
+					"type": "rumor",
+					"args": []
+				},
+				{
+					"domain": "gossip",
+					"type": "known",
+					"args": []
+				},
+				{
+					"domain": "gossip",
+					"type": "sub_request",
+					"args": []
+				}
+			]
+		}
+
 		getPeer = function(state) {
 
 		}
@@ -35,11 +70,19 @@ ruleset gossip {
 		select when gossip heartbeat
 	}
 
-	rule receive_gossip {
+	rule receive_rumor {
 		select when gossip rumor
 	}
 
+	rule receive_known {
+		select when gossip known
+	}
+
 	rule add_subscription {
-		select when gossip sub_request
+		select when gossip add_subscription
+	}
+
+	rule record_own_temp {
+		select when wovyn new_temperature_reading
 	}
 }
