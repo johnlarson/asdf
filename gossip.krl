@@ -46,6 +46,8 @@ ruleset gossip {
 			]
 		}
 
+		INTERVAL = 1000
+
 		getPeer = function(state) {
 
 		}
@@ -84,6 +86,16 @@ ruleset gossip {
 
 	rule gossip {
 		select when gossip heartbeat
+		fired {
+			
+		}
+	}
+
+	rule set_gossip_timeout {
+		select when gossip heartbeat
+		fired {
+			schedule gossip event "heartbeat" at time:add(time:now(), {"ms": INTERVAL})
+		}
 	}
 
 	rule receive_rumor {
