@@ -45,6 +45,15 @@ ruleset gossip {
 
 		}
 
+		getNextSequenceNumber = function() {
+			id = meta:picoId;
+			ent:known{id} => maxSelfKnown() + 1 | 0
+		}
+
+		maxSelfKnown = function() {
+			ent:known{meta:picoId}.length - 1
+		}
+
 		preparedMessage = function(state, subscriber) {
 
 		}
@@ -84,5 +93,14 @@ ruleset gossip {
 
 	rule record_own_temp {
 		select when wovyn new_temperature_reading
+		pre {
+			seq = getNextSequenceNumber().klog("NEXT")
+			id = meta:picoId
+		}
+		fired {
+			ent:known := ent:known.defaultsTo({});
+			ent:known{id} := ent:known{id}.defaultsTo([]);
+			ent:known{id} := ent:known{id}.splice(seq, 0, true)
+		}
 	}
 }
