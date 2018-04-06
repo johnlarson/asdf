@@ -91,7 +91,7 @@ ruleset wovyn_base {
 		})
 	}
 
-	rule accept_parent_subscription {
+	rule accept_subscription {
 		select when wrangler inbound_pending_subscription_added
 		fired {
 			raise wrangler event "pending_subscription_approval"

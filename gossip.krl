@@ -26,12 +26,12 @@ ruleset gossip {
 				{
 					"domain": "gossip",
 					"type": "heartbeat",
-					"args": []
+					"attrs": []
 				},
 				{
 					"domain": "gossip",
 					"type": "rumor",
-					"args": [
+					"attrs": [
 						"MessageID",
 						"SensorID",
 						"Temperature",
@@ -41,7 +41,7 @@ ruleset gossip {
 				{
 					"domain": "gossip",
 					"type": "add_subscription",
-					"args": ["wellknown_Tx", "Tx_host"]
+					"attrs": ["wellKnown_Tx", "Tx_host"]
 				}
 			]
 		}
@@ -112,6 +112,16 @@ ruleset gossip {
 
 	rule add_subscription {
 		select when gossip add_subscription
+		fired {
+			raise wrangler event "subscription"
+				attributes {
+					"channel_type": "subscription",
+					"Tx_host": event:attr("Tx_host"),
+					"wellKnown_Tx": event:attr("wellKnown_Tx"),
+					"Rx_role": "node",
+					"Tx_role": "node"
+				}
+		}
 	}
 
 	rule record_own_temp {
