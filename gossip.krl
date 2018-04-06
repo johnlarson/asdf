@@ -48,13 +48,13 @@ ruleset gossip {
 
 		INTERVAL = 1000
 
-		getPeer = function(state) {
+		getPeer = function() {
 
 		}
 
 		getNextSequenceNumber = function() {
 			id = meta:picoId;
-			ent:known{[id, id]}.klog("EXISTS?") != null => maxSelfKnown(id) + 1 | 0
+			ent:known{[id, id]} != null => maxSelfKnown(id) + 1 | 0
 		}
 
 		maxSelfKnown = function(id) {
@@ -63,16 +63,8 @@ ruleset gossip {
 			idx == -1 => mine.length() - 1 | idx - 1
 		}
 
-		preparedMessage = function(state, subscriber) {
+		preparedMessage = function(subscriber) {
 
-		}
-
-		send = defaction(subscriber, m) {
-			send_directive("null", {})
-		}
-
-		update = defaction(state) {
-			send_directive("null", {})
 		}
 
 	}
@@ -87,7 +79,7 @@ ruleset gossip {
 	rule gossip {
 		select when gossip heartbeat
 		fired {
-			
+
 		}
 	}
 
