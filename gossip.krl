@@ -2,6 +2,7 @@ ruleset gossip {
 
 	meta {
 		name "Gossip"
+		shares __testing
 	}
 
 	global {
@@ -15,6 +16,10 @@ ruleset gossip {
 				{
 					"name": "preparedMessage",
 					"args": ["state", "subscriber"]
+				},
+				{
+					"name": "maxSelfKnown",
+					"args": ["id"]
 				}
 			],
 			"events": [
@@ -47,12 +52,13 @@ ruleset gossip {
 
 		getNextSequenceNumber = function() {
 			id = meta:picoId;
-			ent:known{[id, id]} => maxSelfKnown(id) + 1 | 0
+			ent:known{[id, id]}.klog("EXISTS?") != null => maxSelfKnown(id) + 1 | 0
 		}
 
 		maxSelfKnown = function(id) {
-			idx = index(null);
-			idx == -1 => ent:rumors{meta:picoId}.length - 1 | idx
+			mine = ent:rumors{meta:picoId};
+			idx = mine.index(null);
+			idx == -1 => mine.length() - 1 | idx - 1
 		}
 
 		preparedMessage = function(state, subscriber) {
@@ -83,8 +89,7 @@ ruleset gossip {
 	rule receive_rumor {
 		select when gossip rumor
 		pre {
-
-			mid = event:attr("messageId")
+			mid = event:attr("MessageID")
 			parts = mid.split(":")
 			id = parts[0]
 			seq = parts[1]
