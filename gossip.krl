@@ -26,17 +26,17 @@ ruleset gossip {
 				{
 					"domain": "gossip",
 					"type": "rumor",
-					"args": []
+					"args": [
+						"MessageID",
+						"SensorID",
+						"Temperature",
+						"Timestamp"
+					]
 				},
 				{
 					"domain": "gossip",
-					"type": "known",
-					"args": []
-				},
-				{
-					"domain": "gossip",
-					"type": "sub_request",
-					"args": []
+					"type": "add_subscription",
+					"args": ["wellknown_Tx", "Tx_host"]
 				}
 			]
 		}
@@ -47,11 +47,12 @@ ruleset gossip {
 
 		getNextSequenceNumber = function() {
 			id = meta:picoId;
-			ent:known{id} => maxSelfKnown() + 1 | 0
+			ent:known{[id, id]} => maxSelfKnown(id) + 1 | 0
 		}
 
-		maxSelfKnown = function() {
-			ent:known{meta:picoId}.length - 1
+		maxSelfKnown = function(id) {
+			idx = index(null);
+			idx == -1 => ent:rumors{meta:picoId}.length - 1 | idx
 		}
 
 		preparedMessage = function(state, subscriber) {
@@ -81,24 +82,27 @@ ruleset gossip {
 
 	rule receive_rumor {
 		select when gossip rumor
-	}
-
-	rule receive_known {
-		select when gossip known
-
-	}
-
-	rule receive_single_known {
-		select when gossip single_known
 		pre {
-			seq = event:attr("seq").klog("SEQ")
-			id = event:attr("id")
+
+			mid = event:attr("messageId")
+			parts = mid.split(":")
+			id = parts[0]
+			seq = parts[1]
+			me = meta:picoId
 		}
 		fired {
+			ent:rumors := ent:rumors.defaultsTo({});
+			ent:rumors{id} := ent:rumors{id}.defaultsTo([]);
+			ent:rumors{[id, seq]} := event:attrs;
 			ent:known := ent:known.defaultsTo({});
-			ent:known{id} := ent:known{id}.defaultsTo([]);
-			ent:known{id} := ent:known{id}.splice(seq, 0, true)
+			ent:known{me} := ent:known{me}.defaultsTo({});
+			ent:known{[me, id]} := maxSelfKnown(id)
 		}
+	}
+
+	rule receive_seen {
+		select when gossip seen
+
 	}
 
 	rule add_subscription {
@@ -107,12 +111,18 @@ ruleset gossip {
 
 	rule record_own_temp {
 		select when wovyn new_temperature_reading
+		pre {
+			id = meta:picoId
+			seq = getNextSequenceNumber()
+		}
 		fired {
-			raise gossip event "single_known"
+			raise gossip event "rumor"
 				attributes {
-					"id": meta:picoId,
-					"seq": getNextSequenceNumber()
-				};
+					"MessageID": <<#{id}:#{seq}>>,
+					"SensorID": id,
+					"Temperature": event:attr("temperature"),
+					"Timestamp": event:attr("timestamp")
+				}
 		}
 	}
 
