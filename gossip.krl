@@ -85,6 +85,20 @@ ruleset gossip {
 
 	rule receive_known {
 		select when gossip known
+
+	}
+
+	rule receive_single_known {
+		select when gossip single_known
+		pre {
+			seq = event:attr("seq").klog("SEQ")
+			id = event:attr("id")
+		}
+		fired {
+			ent:known := ent:known.defaultsTo({});
+			ent:known{id} := ent:known{id}.defaultsTo([]);
+			ent:known{id} := ent:known{id}.splice(seq, 0, true)
+		}
 	}
 
 	rule add_subscription {
@@ -93,14 +107,13 @@ ruleset gossip {
 
 	rule record_own_temp {
 		select when wovyn new_temperature_reading
-		pre {
-			seq = getNextSequenceNumber().klog("NEXT")
-			id = meta:picoId
-		}
 		fired {
-			ent:known := ent:known.defaultsTo({});
-			ent:known{id} := ent:known{id}.defaultsTo([]);
-			ent:known{id} := ent:known{id}.splice(seq, 0, true)
+			raise gossip event "single_known"
+				attributes {
+					"id": meta:picoId,
+					"seq": getNextSequenceNumber()
+				};
 		}
 	}
+
 }
