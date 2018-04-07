@@ -91,8 +91,16 @@ ruleset gossip {
 			rumorScore = RUMOR_FACTOR * getNeedScore(mySeen, theirSeen);
 			seenScore = SEEN_FACTOR * getNeedScore(theirSeen, mySeen);
 			type = seenScore > rumorScore => "seen" | "rumor";
-			msg = seenScore > rumorScore => mySeen | buildRumorFor(theirSeen);
+			msg = seenScore > rumorScore => buildSeen() | buildRumorFor(theirSeen);
 			[type, rumor]
+		}
+
+		buildSeen = function(mySeen) {
+			id = meta:picoId;
+			{
+				"picoId": id,
+				"seen": ent:seen{id}
+			}
 		}
 
 		buildRumorFor = function(seen) {
@@ -187,7 +195,13 @@ ruleset gossip {
 
 	rule receive_seen {
 		select when gossip seen
-
+		pre {
+			id = event:attr("picoId")
+			seen = event:attr("seen")
+		}
+		fired {
+			ent:seen{id} := seen
+		}
 	}
 
 	rule add_subscription {
