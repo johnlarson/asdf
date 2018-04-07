@@ -90,7 +90,9 @@ ruleset gossip {
 			mySeen = ent:seen{meta:picoId};
 			rumorScore = RUMOR_FACTOR * getNeedScore(mySeen, theirSeen);
 			seenScore = SEEN_FACTOR * getNeedScore(theirSeen, mySeen);
-			seenScore > rumorScore => mySeen | buildRumorFor(theirSeen)
+			type = seenScore > rumorScore => "seen" | "rumor";
+			msg = seenScore > rumorScore => mySeen | buildRumorFor(theirSeen);
+			[type, rumor]
 		}
 
 		buildRumorFor = function(seen) {
@@ -121,8 +123,15 @@ ruleset gossip {
 			}).values(){[0, toChoose]}
 		}
 
-		send = defaction(subscriber, m) {
-			send_directive("null", {})
+		send = defaction(subscriber, m, type) {
+			info = id_to_sub{subscriber};
+			event:send({
+				"eci": info{"channel"},
+				"host": info{"host"},
+				"domain": "gossip",
+				"type": type,
+				"attrs": m
+			})
 		}
 
 	}
@@ -138,11 +147,15 @@ ruleset gossip {
 		select when gossip heartbeat
 		pre {
 			subscriber = getPeer().klog("PEER")
-			m = preparedMessage(peer)
+			info = preparedMessage(subscriber)
+			type = info[0]
+			m = info[1]
 		}
-		send(subscriber, m)
+		send(subscriber, m, type)
 		fired {
-
+			addable = type == "rumor" => 1 | 0;
+			path = [subscriber, m{"SensorID"}];
+			ent:seen{path} := ent:seen{path} + addable
 		}
 	}
 
@@ -216,26 +229,31 @@ ruleset gossip {
 				"eci": event:attr("Tx"),
 				"host": event:attr("Tx_host"),
 				"domain": "gossip",
-				"type": "new_id_channel_pair",
+				"type": "new_id_sub_pair",
 				"attrs": {
 					"id": meta:picoId,
-					"channel": event:attr("Rx")
+					"channel": event:attr("Rx"),
+					"host": meta:host
 				}
 			})
 		fired {
-			raise gossip event "new_id_channel_pair"
+			raise gossip event "new_id_sub_pair"
 				attributes {
 					"id": event:attr("picoId"),
-					"channel": event:attr("Tx")
+					"channel": event:attr("Tx"),
+					"host": event:attr("Tx_host")
 				}
 		}
 	}
 
-	rule store_id_to_channel {
-		select when gossip new_id_channel_pair
+	rule store_id_to_sub {
+		select when gossip new_id_sub_pair
 		fired {
-			ent:id_to_channel := ent:id_to_channel.defaultsTo({});
-			ent:id_to_channel{event:attr("id")} := event:attr("channel")
+			ent:id_to_sub := ent:id_to_sub.defaultsTo({});
+			ent:id_to_sub{event:attr("id")} := {
+				"channel": event:attr("channel"),
+				"host": event:attr("host")
+			}
 		}
 	}
 
