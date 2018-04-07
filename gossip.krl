@@ -52,7 +52,7 @@ ruleset gossip {
 
 		getPeer = function() {
 			chooseRandomly(ent:seen, "key", function(v, k) {
-				getMyNeedScore(v);
+				//getMyNeedScore(v);
 			})
 		}
 
@@ -113,7 +113,11 @@ ruleset gossip {
 			ent:rumors{[sensorId, needed]}
 		}
 
-		randomlyChoose = function(aMap, toChoose, aFunction) {
+		chooseRandomly = function(aMap, toChoose, aFunction, default) {
+			aMap == {} => default | chooseRandomlyNoDefault(aMap, toChoose, aFunction)
+		}
+
+		chooseRandomlyNoDefault = function(aMap, toChoose, aFunction, default) {
 			scores = aMap.map(aFunction);
 			bounds = scores.keys().reduce(function(a, b) {
 				addable = {
@@ -155,7 +159,7 @@ ruleset gossip {
 		select when gossip heartbeat
 		pre {
 			subscriber = getPeer().klog("PEER")
-			info = preparedMessage(subscriber)
+			//info = preparedMessage(subscriber)
 			type = info[0]
 			m = info[1]
 		}
@@ -169,8 +173,13 @@ ruleset gossip {
 
 	rule set_gossip_timeout {
 		select when gossip heartbeat
+		pre {
+			a = event:attrs.klog("TIMEOUT")
+		}
 		fired {
-			schedule gossip event "heartbeat" at time:add(time:now(), {"ms": INTERVAL})
+			schedule gossip event "heartbeat"
+				at time:add(time:now(), {"ms": INTERVAL})
+				attributes {}
 		}
 	}
 
