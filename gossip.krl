@@ -51,9 +51,10 @@ ruleset gossip {
 		KNOWN_FACTOR = 2
 
 		getPeer = function() {
+			ids = ent:id_to_sub.keys();
 			chooseRandomly(ent:seen, "key", function(v, k) {
-				//getMyNeedScore(v);
-			})
+				getMyNeedScore(v.klog("VALUE"));
+			}, ids[random:integer(0, ids.length() - 1)])
 		}
 
 		getMyNeedScore = function(seen) {
@@ -90,7 +91,7 @@ ruleset gossip {
 			mySeen = ent:seen{meta:picoId};
 			rumorScore = RUMOR_FACTOR * getNeedScore(mySeen, theirSeen);
 			seenScore = SEEN_FACTOR * getNeedScore(theirSeen, mySeen);
-			type = seenScore > rumorScore => "seen" | "rumor";
+			type = (not(ent:rumors) || seenScore > rumorScore) => "seen" | "rumor";
 			msg = seenScore > rumorScore => buildSeen() | buildRumorFor(theirSeen);
 			[type, rumor]
 		}
@@ -108,13 +109,15 @@ ruleset gossip {
 				mine = ent:seen{meta:picoId};
 				getNeedScoreSingle(mine, seen, k)
 			});
-			latest = ent:seen{sensorId};
+			latest = sensorId => ent:seen{sensorId} | -1;
+			ids = ent:rumors.keys();
+			sensorId.defaultsTo(ids[random:integer(0, ids.length() - 1)]);
 			needed = latest + 1;
 			ent:rumors{[sensorId, needed]}
 		}
 
-		chooseRandomly = function(aMap, toChoose, aFunction, default) {
-			aMap == {} => default | chooseRandomlyNoDefault(aMap, toChoose, aFunction)
+		chooseRandomly = function(aMap, toChoose, aFunction, default = null) {
+			aMap == {} || aMap == null => default | chooseRandomlyNoDefault(aMap, toChoose, aFunction)
 		}
 
 		chooseRandomlyNoDefault = function(aMap, toChoose, aFunction, default) {
@@ -156,10 +159,10 @@ ruleset gossip {
 	}
 
 	rule gossip {
-		select when gossip heartbeat
+		select when gossip heartbeat where ent:id_to_sub
 		pre {
-			subscriber = getPeer().klog("PEER")
-			//info = preparedMessage(subscriber)
+			subscriber = getPeer().klog("PEER RET")
+			info = preparedMessage(subscriber)
 			type = info[0]
 			m = info[1]
 		}
@@ -173,9 +176,6 @@ ruleset gossip {
 
 	rule set_gossip_timeout {
 		select when gossip heartbeat
-		pre {
-			a = event:attrs.klog("TIMEOUT")
-		}
 		fired {
 			schedule gossip event "heartbeat"
 				at time:add(time:now(), {"ms": INTERVAL})
