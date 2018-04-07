@@ -100,20 +100,23 @@ ruleset wovyn_base {
 	}
 
 	rule notify_manager_subscription_added {
-		select when wrangler subscription_added
-		event:send({
-			"eci": event:attr("Tx"),
-			"domain": "manager",
-			"type": "child_sensor_subscribed",
-			"attrs": {
-				"name": wrangler:myself(){"name"},
-				"Rx": event:attr("Tx"),
-				"Rx_role": event:attr("Tx_role"),
-				"Tx": event:attr("Rx"),
-				"Rx": event:attr("Tx"),
-				"Tx_role": event:attr("Rx_role")
-			}
-		})
+		select when wrangler subscription_added where Tx_role == "manager"
+		if event:attr("Tx_role") == "manager" then
+			event:send({
+				"eci": event:attr("Tx"),
+				"domain": "manager",
+				"type": "child_sensor_subscribed",
+				"attrs": {
+					"name": wrangler:myself(){"name"},
+					"Rx": event:attr("Tx"),
+					"Rx_role": event:attr("Tx_role"),
+					"Tx": event:attr("Rx"),
+					"Rx": event:attr("Tx"),
+					"Tx_role": event:attr("Rx_role")
+				}
+			})
+		else
+			noop()
 	}
 
 }

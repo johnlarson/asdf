@@ -186,7 +186,8 @@ ruleset gossip {
 					"Tx_host": event:attr("Tx_host"),
 					"wellKnown_Tx": event:attr("wellKnown_Tx"),
 					"Rx_role": "node",
-					"Tx_role": "node"
+					"Tx_role": "node",
+					"picoId": meta:picoId
 				}
 		}
 	}
@@ -205,6 +206,36 @@ ruleset gossip {
 					"Temperature": event:attr("temperature"),
 					"Timestamp": event:attr("timestamp")
 				}
+		}
+	}
+
+	rule handle_node_subscription {
+		select when wrangler inbound_pending_subscription_added
+			where Tx_role == "node"
+		event:send({
+				"eci": event:attr("Tx"),
+				"host": event:attr("Tx_host"),
+				"domain": "gossip",
+				"type": "new_id_channel_pair",
+				"attrs": {
+					"id": meta:picoId,
+					"channel": event:attr("Rx")
+				}
+			})
+		fired {
+			raise gossip event "new_id_channel_pair"
+				attributes {
+					"id": event:attr("picoId"),
+					"channel": event:attr("Tx")
+				}
+		}
+	}
+
+	rule store_id_to_channel {
+		select when gossip new_id_channel_pair
+		fired {
+			ent:id_to_channel := ent:id_to_channel.defaultsTo({});
+			ent:id_to_channel{event:attr("id")} := event:attr("channel")
 		}
 	}
 
