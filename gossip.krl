@@ -2,7 +2,7 @@ ruleset gossip {
 
 	meta {
 		name "Gossip"
-		shares __testing
+		shares __testing, getPeer
 	}
 
 	global {
@@ -53,22 +53,21 @@ ruleset gossip {
 		getPeer = function() {
 			mine = ent:seen{meta:picoId};
 			scores = ent:seen.map(function(v, k) {
-				getNeedScore(v),
+				getNeedScore(v)
 			});
-			// go through sequentially, give each one a number,
-			// and randomiz
 			total = 0;
-			bounds = scores.map(function(v, k) {
-				ret = {
+			bounds = scores.keys().reduce(function(a, b) {
+				addable = {
 					"id": k,
-					"min": total
-				}
-				total.klog("TOTAL") = total + v
-				ret.put("max": total - 1)
-			});
-			rand = random:integer(total - 1)
+					"min": a{"total"}
+				};
+				a = a.put("total", a{"total"} + scores{b});
+				addable.put("max", a{"total"} - 1);
+			}, {"total": 0});
+			rand = random:integer(bounds{"total"} - 1);
+			bounds = bounds.delete(["total"]);
 			bounds.filter(function(v, k) {
-				rand >= v{"min"} and rand <= v{"max"}
+				rand >= v{"min"} && rand <= v{"max"}
 			}).values(){[0, "id"]}
 		}
 
@@ -107,7 +106,7 @@ ruleset gossip {
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			raise gossip event "heartbeat"
+			raise gossip event "heartbeat" attributes {}
 		}
 	}
 
