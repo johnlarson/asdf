@@ -53,7 +53,7 @@ ruleset gossip {
 		getPeer = function() {
 			mine = ent:seen{meta:picoId};
 			scores = ent:seen.map(function(v, k) {
-				getNeedScore(v)
+				getMyNeedScore(v)
 			});
 			total = 0;
 			bounds = scores.keys().reduce(function(a, b) {
@@ -71,15 +71,22 @@ ruleset gossip {
 			}).values(){[0, "id"]}
 		}
 
-		getNeedScore = function(seen) {
-			seen.keys().reduce(function(a, b) {
-				a + getNeedScoreSingle(seen, b)
+		getMyNeedScore = function(seen) {
+			mySeen = ent:seen{meta:picoId};
+			rumorScore = getNeedScore(mySeen, seen);
+			seenScore = getNeedScore(seen, mySeen);
+			RUMOR_FACTOR * rumorScore + SEEN_FACTOR * seenScore
+		}
+
+		getNeedScore = function(seen1, seen2) {
+			seen1.keys().reduce(function(a, b) {
+				a + getNeedScoreSingle(seen1, seen2, b)
 			}, 0)
 		}
 
-		getNeedScoreSingle = function(seen, key) {
-			diff = ent:seen{[meta:picoId, key]} - seen{key};
-			diff < 0 => -diff * KNOWN_FACTOR | diff * RUMOR_FACTOR
+		getNeedScoreSingle = function(seen1, seen2, key) {
+			diff = seen2 >< key => seen1{key} - seen2{key} | seen1{key} + 1;
+			diff > 0 => diff | 0
 		}
 
 		getNextSequenceNumber = function() {
