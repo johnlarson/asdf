@@ -47,14 +47,45 @@ ruleset gossip {
 		}
 
 		INTERVAL = 1000
+		RUMOR_FACTOR = 3
+		KNOWN_FACTOR = 2
 
 		getPeer = function() {
+			mine = ent:seen{meta:picoId};
+			scores = ent:seen.map(function(v, k) {
+				getNeedScore(v),
+			});
+			// go through sequentially, give each one a number,
+			// and randomiz
+			total = 0;
+			bounds = scores.map(function(v, k) {
+				ret = {
+					"id": k,
+					"min": total
+				}
+				total.klog("TOTAL") = total + v
+				ret.put("max": total - 1)
+			});
+			rand = random:integer(total - 1)
+			bounds.filter(function(v, k) {
+				rand >= v{"min"} and rand <= v{"max"}
+			}).values(){[0, "id"]}
+		}
 
+		getNeedScore = function(seen) {
+			seen.keys().reduce(function(a, b) {
+				a + getNeedScoreSingle(seen, b)
+			}, 0)
+		}
+
+		getNeedScoreSingle = function(seen, key) {
+			diff = ent:seen{[meta:picoId, key]} - seen{key};
+			diff < 0 => -diff * KNOWN_FACTOR | diff * RUMOR_FACTOR
 		}
 
 		getNextSequenceNumber = function() {
 			id = meta:picoId;
-			ent:known{[id, id]} != null => maxSelfKnown(id) + 1 | 0
+			ent:seen{[id, id]} != null => maxSelfKnown(id) + 1 | 0
 		}
 
 		maxSelfKnown = function(id) {
@@ -65,6 +96,10 @@ ruleset gossip {
 
 		preparedMessage = function(subscriber) {
 
+		}
+
+		send = defaction(subscriber, m) {
+			send_directive("null", {})
 		}
 
 	}
@@ -78,6 +113,11 @@ ruleset gossip {
 
 	rule gossip {
 		select when gossip heartbeat
+		pre {
+			subscriber = getPeer().klog("PEER")
+			m = preparedMessage(peer)
+		}
+		send(subscriber, m)
 		fired {
 
 		}
@@ -103,9 +143,9 @@ ruleset gossip {
 			ent:rumors := ent:rumors.defaultsTo({});
 			ent:rumors{id} := ent:rumors{id}.defaultsTo([]);
 			ent:rumors{[id, seq]} := event:attrs;
-			ent:known := ent:known.defaultsTo({});
-			ent:known{me} := ent:known{me}.defaultsTo({});
-			ent:known{[me, id]} := maxSelfKnown(id)
+			ent:seen := ent:seen.defaultsTo({});
+			ent:seen{me} := ent:seen{me}.defaultsTo({});
+			ent:seen{[me, id]} := maxSelfKnown(id)
 		}
 	}
 
