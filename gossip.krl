@@ -51,24 +51,9 @@ ruleset gossip {
 		KNOWN_FACTOR = 2
 
 		getPeer = function() {
-			mine = ent:seen{meta:picoId};
-			scores = ent:seen.map(function(v, k) {
-				getMyNeedScore(v)
-			});
-			total = 0;
-			bounds = scores.keys().reduce(function(a, b) {
-				addable = {
-					"id": k,
-					"min": a{"total"}
-				};
-				a = a.put("total", a{"total"} + scores{b});
-				addable.put("max", a{"total"} - 1);
-			}, {"total": 0});
-			rand = random:integer(bounds{"total"} - 1);
-			bounds = bounds.delete(["total"]);
-			bounds.filter(function(v, k) {
-				rand >= v{"min"} && rand <= v{"max"}
-			}).values(){[0, "id"]}
+			chooseRandomly(ent:seen, "key", function(v, k) {
+				getMyNeedScore(v);
+			})
 		}
 
 		getMyNeedScore = function(seen) {
@@ -101,7 +86,39 @@ ruleset gossip {
 		}
 
 		preparedMessage = function(subscriber) {
+			theirSeen = ent:seen{subscriber};
+			mySeen = ent:seen{meta:picoId};
+			rumorScore = RUMOR_FACTOR * getNeedScore(mySeen, theirSeen);
+			seenScore = SEEN_FACTOR * getNeedScore(theirSeen, mySeen);
+			seenScore > rumorScore => mySeen | buildRumorFor(theirSeen)
+		}
 
+		buildRumorFor = function(seen) {
+			sensorId = chooseRandomly(seen, "key", function(v, k) {
+				mine = ent:seen{meta:picoId};
+				getNeedScoreSingle(mine, seen, k)
+			});
+			latest = ent:seen{sensorId};
+			needed = latest + 1;
+			ent:rumors{[sensorId, needed]}
+		}
+
+		randomlyChoose = function(aMap, toChoose, aFunction) {
+			scores = aMap.map(aFunction);
+			bounds = scores.keys().reduce(function(a, b) {
+				addable = {
+					"key": k,
+					"value": v,
+					"min": a{"total"}
+				};
+				a = a.put("total", a{"total"} + scores{b});
+				addable.put("max", a{"total"} - 1);
+			}, {"total": 0});
+			rand = random:integer(bounds{"total"} - 1);
+			bounds = bounds.delete(["total"]);
+			bounds.filter(function(v, k) {
+				rand >= v{"min"} && rand <= v{"max"}
+			}).values(){[0, toChoose]}
 		}
 
 		send = defaction(subscriber, m) {
