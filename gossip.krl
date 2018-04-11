@@ -67,7 +67,7 @@ ruleset gossip {
 			"key".klog("\t\tTO_CHOOSE");
 			null.klog("\t\tDEFAULT");
 			chooseRandomly(ent:seen, "key", function(v, k) {
-				[v, k].klog("\t\tV,K")
+				[v, k].klog("\t\tV,K");
 				getMyNeedScore(v).klog("\t\t\tNEED_SCORE");
 			}, ids[random:integer(0, ids.length() - 1)].klog("\t\tDEFAULT")).klog("RET getPeer");
 		}
@@ -216,20 +216,19 @@ ruleset gossip {
 		}
 
 		send = defaction(subscriber, m, type) {
-			a.klog("START send");
-			subscriber.klog("\tSUBSCRIBER");
-			m.klog("\tM");
-			type.klog("\tTYPE");
+			x = a.klog("START send");
+			x = subscriber.klog("\tSUBSCRIBER");
+			x = m.klog("\tM");
+			x = type.klog("\tTYPE");
 			info = ent:id_to_sub{subscriber};
-			info.klog("\tINFO");
+			x = info.klog("\tINFO");
 			event:send({
 				"eci": info{"channel"},
 				"host": info{"host"},
 				"domain": "gossip",
 				"type": type,
 				"attrs": m
-			}.klog("SENDABLE"));
-			a.klog("END send")
+			}.klog("END send, sending:"));
 		}
 
 	}
@@ -246,24 +245,39 @@ ruleset gossip {
 	rule gossip {
 		select when gossip heartbeat where ent:id_to_sub
 		pre {
-			a = a.klog("START gossip")
-			a = a.klog("\tPRE")
+			x = a.klog("START gossip")
+			x = event:attrs.klog("\tATTRS")
+			x = a.klog("\tPRE")
 			subscriber = getPeer().klog("\t\tSUBSCRIBER")
 			info = preparedMessage(subscriber).klog("\t\tINFO")
 			type = info[0].klog("\t\tTYPE")
 			m = info[1].klog("\t\tM")
+			event_to_raise = type == "rumor" => "sent_rumor" | "nothing"
 		}
 		send(subscriber, m, type)
 		fired {
 			a.klog("\tFIRED");
-			addable = type == "rumor" => 1 | 0;
-			addable.klog("\t\tADDABLE");
-			path = [subscriber, m{"SensorID"}];
-			path.klog("\t\tPATH");
-			ent:seen.klog("ENT:SEEN BEFORE");
-			ent:seen{path} := ent:seen{path} + addable;
-			ent:seen.klog("ENT:SEEN AFTER");
+			raise gossip event event_to_raise
+				attributes {
+					"subscriber": subscriber,
+					"m": m
+				}.klog("\t\tRAISING ATTRS");
+			event_to_raise.klog("\t\tEVENT RAISED");
 			a.klog("END gossip")
+		}
+	}
+
+	rule store_own_rumor {
+		select when gossip sent_rumor
+		fired {
+			a.klog("START store_own_rumor");
+			event:attrs.klog("\tATTRS");
+			path = [subscriber, m{"SensorID"}];
+			path.klog("\tPATH");
+			ent:seen.klog("\tENT:SEEN BEFORE");
+			ent:seen{path} := ent:seen{path} + 1;
+			ent:seen.klog("\tENT:SEEN AFTER");
+			a.klog("END store_own_rumor")
 		}
 	}
 
@@ -279,8 +293,9 @@ ruleset gossip {
 	rule receive_rumor {
 		select when gossip rumor
 		pre {
-			a = a.klog("START receive_rumor")
-			a = a.klog("\tPRE")
+			x = a.klog("START receive_rumor")
+			x = event:attrs.klog("\ATTRS")
+			x = a.klog("\tPRE")
 			mid = event:attr("MessageID").klog("\t\tMID")
 			parts = mid.split(":").klog("\t\tPARTS")
 			id = parts[0].klog("\t\tID")
@@ -308,13 +323,14 @@ ruleset gossip {
 	rule receive_seen {
 		select when gossip seen
 		pre {
-			a = a.klog("START receive_rumor")
-			a = a.klog("\tPRE")
+			x = a.klog("START receive_rumor")
+			x = event:attrs.klog("ATTRS")
+			x = a.klog("\tPRE")
 			id = event:attr("picoId").klog("\t\tID")
 			seen = event:attr("seen").klog("\t\tSEEN")
 		}
 		fired {
-			a.klog("\tFIRED")
+			a.klog("\tFIRED");
 			ent:seen := ent:seen.defaultsTo({});
 			ent:seen.klog("\t\tENT:SEEN");
 			ent:seen{id} := seen;
@@ -366,7 +382,7 @@ ruleset gossip {
 				"attrs": {
 					"id": meta:picoId,
 					"channel": event:attr("Rx"),
-					"host": meta:host
+					"host": meta:host,
 				}
 			})
 		fired {
@@ -387,6 +403,13 @@ ruleset gossip {
 				"channel": event:attr("channel"),
 				"host": event:attr("host")
 			}
+		}
+	}
+
+	rule init_seen_info {
+		select when gossip new_id_sub_pair
+		fired {
+			
 		}
 	}
 
