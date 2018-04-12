@@ -113,11 +113,11 @@ ruleset gossip {
 		maxSelfKnown = function(id) {
 			a.klog("START maxSelfKnown");
 			id.klog("\tID");
-			mine = ent:rumors{meta:picoId};
-			mine.klog("\tMINE");
-			idx = mine.index(null);
+			forId = ent:rumors{id}.defaultsTo([]);
+			forId.klog("\tFOR_ID");
+			idx = forId.index(null);
 			idx.klog("\tIDX");
-			(idx == -1 => mine.length() - 1 | idx - 1).klog("RET maxSelfKnown")
+			(idx == -1 => forId.length() - 1 | idx - 1).klog("RET maxSelfKnown")
 		}
 
 		preparedMessage = function(subscriber) {
@@ -248,6 +248,7 @@ ruleset gossip {
 	rule init_own_seen {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
+			ent:seen = ent:seen.defaultsTo({});
 			ent:seen{meta:picoId} := ent:seen{meta:picoId}.defaultsTo({})
 		}
 	}
@@ -255,7 +256,7 @@ ruleset gossip {
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			raise gossip event "heartbeat" attributes {}
+			//raise gossip event "heartbeat" attributes {}
 		}
 	}
 
@@ -286,10 +287,14 @@ ruleset gossip {
 
 	rule store_own_rumor {
 		select when gossip sent_rumor
+		pre {
+			subscriber = event:attr("subscriber")
+			m = event:attr("m")
+			path = [subscriber, m{"SensorID"}]
+		}
 		fired {
 			a.klog("START store_own_rumor");
 			event:attrs.klog("\tATTRS");
-			path = [subscriber, m{"SensorID"}];
 			path.klog("\tPATH");
 			ent:seen.klog("\tENT:SEEN BEFORE");
 			ent:seen{path} := ent:seen{path} + 1;
@@ -301,9 +306,9 @@ ruleset gossip {
 	rule set_gossip_timeout {
 		select when gossip heartbeat
 		fired {
-			schedule gossip event "heartbeat"
-				at time:add(time:now(), {"ms": INTERVAL})
-				attributes {}
+			//schedule gossip event "heartbeat"
+			//	at time:add(time:now(), {"ms": INTERVAL})
+			//	attributes {}
 		}
 	}
 
@@ -311,7 +316,7 @@ ruleset gossip {
 		select when gossip rumor
 		pre {
 			x = a.klog("START receive_rumor")
-			x = event:attrs.klog("\ATTRS")
+			x = event:attrs.klog("\tATTRS")
 			x = a.klog("\tPRE")
 			mid = event:attr("MessageID").klog("\t\tMID")
 			parts = mid.split(":").klog("\t\tPARTS")
