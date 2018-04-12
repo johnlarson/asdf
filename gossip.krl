@@ -54,7 +54,7 @@ ruleset gossip {
 			]
 		}
 
-		INTERVAL = 1000
+		INTERVAL = 1
 		RUMOR_FACTOR = 1
 		KNOWN_FACTOR = 1
 
@@ -335,7 +335,7 @@ ruleset gossip {
 		select when gossip heartbeat
 		fired {
 			schedule gossip event "heartbeat"
-				at time:add(time:now(), {"ms": INTERVAL})
+				at time:add(time:now(), {"s": INTERVAL})
 				attributes {}
 		}
 	}
@@ -413,7 +413,7 @@ ruleset gossip {
 			subscriber = event:attr("subscriber")
 			m = event:attr("m")
 		}
-		send(subscriber, m, rumor)
+		send(subscriber, m, "rumor")
 	}
 
 	rule add_subscription {
