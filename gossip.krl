@@ -270,7 +270,7 @@ ruleset gossip {
 			info = preparedMessage(subscriber).klog("\t\tINFO")
 			type = info[0].klog("\t\tTYPE")
 			m = info[1].klog("\t\tM")
-			event_to_raise = type == "rumor" => "sent_rumor" | "nothing"
+			event_to_raise = type == "nothing"//"rumor" => "sent_rumor" | "nothing"
 		}
 		send(subscriber, m, type)
 		fired {
