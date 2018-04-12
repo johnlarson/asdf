@@ -54,7 +54,7 @@ ruleset gossip {
 			]
 		}
 
-		INTERVAL = 1
+		INTERVAL = 5
 		RUMOR_FACTOR = 1
 		KNOWN_FACTOR = 1
 
