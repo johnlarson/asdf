@@ -173,7 +173,17 @@ ruleset gossip {
 			sensorId.klog("\tSENSOR ID DEFAULTED");
 			needed = latest + 1;
 			needed.klog("\tNEEDED");
-			ent:rumors{[sensorId, needed]}.klog("RET buildRumorFor")
+			(sensorId => ent:rumors{[sensorId, needed]}.klog("\tBY PATH") | getRandomRumor().klog("\tTOTALLY RANDOM")).klog("RET buildRumorFor")
+		}
+
+		getRandomRumor = function() {
+			rumors = ent:rumors
+				.klog("RUMORS")
+				.values()
+				.klog("VALUES")
+				.reduce(function(a, b) {a.append(b)}, [])
+				.klog("REDUCED");
+			rumors[random:integer(rumors.length() - 1)]
 		}
 
 		chooseRandomly = function(aMap, toChoose, aFunction, default = null) {
@@ -235,7 +245,12 @@ ruleset gossip {
 
 	}
 
-
+	rule init_own_seen {
+		select when wrangler ruleset_added where rids >< meta:rid
+		fired {
+			ent:seen{meta:picoId} := ent:seen{meta:picoId}.defaultsTo({})
+		}
+	}
 
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
