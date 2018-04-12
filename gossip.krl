@@ -256,7 +256,7 @@ ruleset gossip {
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			raise gossip event "heartbeat" attributes {}
+			//raise gossip event "heartbeat" attributes {}
 		}
 	}
 
@@ -290,6 +290,7 @@ ruleset gossip {
 		pre {
 			subscriber = event:attr("subscriber")
 			m = event:attr("m")
+			req = m{"MessageID"}.split(":")[1]
 			path = [subscriber, m{"SensorID"}]
 		}
 		fired {
@@ -297,7 +298,11 @@ ruleset gossip {
 			event:attrs.klog("\tATTRS");
 			path.klog("\tPATH");
 			ent:seen.klog("\tENT:SEEN BEFORE");
-			ent:seen{path} := ent:seen{path} + 1;
+			ent:seen{subscriber} := ent:seen{subscriber}.defaultsTo({});
+			ent:seen{subscriber}.klog("ENT:SEEN{SUBSCRIBER}");
+			prev_highest = ent:seen{path}.defaultsTo(-1);
+			prev_highest.klog("PREV_HIGHEST");
+			ent:seen{path} := req == prev_highest + 1 => req | prev_highest;
 			ent:seen.klog("\tENT:SEEN AFTER");
 			a.klog("END store_own_rumor")
 		}
@@ -306,9 +311,9 @@ ruleset gossip {
 	rule set_gossip_timeout {
 		select when gossip heartbeat
 		fired {
-			schedule gossip event "heartbeat"
-				at time:add(time:now(), {"ms": INTERVAL})
-				attributes {}
+			//schedule gossip event "heartbeat"
+			//	at time:add(time:now(), {"ms": INTERVAL})
+			//	attributes {}
 		}
 	}
 
