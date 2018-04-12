@@ -63,9 +63,10 @@ ruleset gossip {
 			a.klog("START getPeer");
 			ids = ent:id_to_sub.keys().klog("\tIDS");
 			a.klog("\tLOOP chooseRandomly");
-			ent:seen.klog("\t\tMAP (ent:seen)");
+			seen = ent:seen.delete(meta:picoId);
+			seen.klog("SEEN");
+			seen.klog("\t\tMAP (seen)");
 			"key".klog("\t\tTO_CHOOSE");
-			null.klog("\t\tDEFAULT");
 			chooseRandomly(ent:seen, "key", function(v, k) {
 				[v, k].klog("\t\tV,K");
 				getMyNeedScore(v).klog("\t\t\tNEED_SCORE");
@@ -75,7 +76,7 @@ ruleset gossip {
 		getMyNeedScore = function(seen) {
 			a.klog("START getMyNeedScore");
 			seen.klog("\tSEEN");
-			mySeen = ent:seen{meta:picoId}.klog("\tMY_SEEN");
+			mySeen = ent:seen{meta:picoId}.defaultsTo({}).klog("\tMY_SEEN");
 			rumorScore = getNeedScore(mySeen, seen).klog("\tRUMOR_SCORE");
 			seenScore = getNeedScore(seen, mySeen).klog("\tSEEN_SCORE");
 			(RUMOR_FACTOR * rumorScore + SEEN_FACTOR * seenScore).klog("RET getMyNeedScore")
@@ -89,7 +90,7 @@ ruleset gossip {
 			seen1.keys().reduce(function(a, b) {
 				[a, b].klog("\t\tA, B");
 				(a + getNeedScoreSingle(seen1, seen2, b)).klog("\t\tREDUCE RET")
-			}, (0).klog("\tDEFAULT")).klog("RET getNeedScore")
+			}, (0).klog("\t\tDEFAULT")).klog("RET getNeedScore")
 		}
 
 		getNeedScoreSingle = function(seen1, seen2, key) {
@@ -180,7 +181,8 @@ ruleset gossip {
 			aMap.klog("\tA_MAP");
 			toChoose.klog("\tTO_CHOOSE");
 			default.klog("\tDEFAULT");
-			(((aMap == {}).klog("\tA_MAP EMPTY?") || (aMap == null).klog("\tA_MAP NULL?")).klog("\tNOTHING IN A_MAP?") => default | chooseRandomlyNoDefault(aMap, toChoose, aFunction)).klog("RET chooseRandomly")
+			result = (((aMap == {}).klog("\tA_MAP EMPTY?") || (aMap == null).klog("\tA_MAP NULL?")).klog("\tNOTHING IN A_MAP?") => default | chooseRandomlyNoDefault(aMap, toChoose, aFunction)).klog("RET chooseRandomly");
+			result == null => default | result
 		}
 
 		chooseRandomlyNoDefault = function(aMap, toChoose, aFunction) {
@@ -200,9 +202,9 @@ ruleset gossip {
 				addable.klog("\t\t\tADDABLE");
 				a = a.put("total", a{"total"} + scores{b});
 				a.klog("\t\t\tA");
-				addable.put("max", a{"total"} - 1);
+				addable = addable.put("max", a{"total"} - 1);
 				addable.klog("\t\t\tADDABLE");
-				a.put(b, addable).klog("\t\tREDUCE RET")
+				(addable{"max"} >= addable{"min"} => a.put(b, addable) | a).klog("\t\tREDUCE RET")
 			}, {"total": 0}.klog("\t\tDEFAULT"));
 			rand = random:integer(bounds{"total"} - 1);
 			rand.klog("\tRAND");
@@ -341,7 +343,12 @@ ruleset gossip {
 
 	rule add_subscription {
 		select when gossip add_subscription
+		pre {
+			me = meta:picoId
+		}
 		fired {
+			ent:seen := ent:seen.defaultsTo({});
+			ent:seen{me} := ent:seen{me}.defaultsTo({});
 			raise wrangler event "subscription"
 				attributes {
 					"channel_type": "subscription",
@@ -349,7 +356,8 @@ ruleset gossip {
 					"wellKnown_Tx": event:attr("wellKnown_Tx"),
 					"Rx_role": "node",
 					"Tx_role": "node",
-					"picoId": meta:picoId
+					"picoId": meta:picoId,
+					"seen": ent:seen{me}
 				}
 		}
 	}
@@ -383,6 +391,7 @@ ruleset gossip {
 					"id": meta:picoId,
 					"channel": event:attr("Rx"),
 					"host": meta:host,
+					"seen": ent:seen{meta:picoId}.defaultsTo({})
 				}
 			})
 		fired {
@@ -390,23 +399,29 @@ ruleset gossip {
 				attributes {
 					"id": event:attr("picoId"),
 					"channel": event:attr("Tx"),
-					"host": event:attr("Tx_host")
+					"host": event:attr("Tx_host"),
+					"seen": event:attr("seen")
 				}
 		}
 	}
 
 	rule store_id_to_sub {
 		select when gossip new_id_sub_pair
+		pre {
+			id = event:attr("id")
+		}
 		fired {
 			ent:id_to_sub := ent:id_to_sub.defaultsTo({});
-			ent:id_to_sub{event:attr("id")} := {
+			ent:id_to_sub{id} := {
 				"channel": event:attr("channel"),
 				"host": event:attr("host")
-			}
+			};
+			ent:seen := ent:seen.defaultsTo({});
+			ent:seen{id} := event:attr("seen")
 		}
 	}
 
-	rule init_seen_info {
+	rule init_subscription_seen_info {
 		select when gossip new_id_sub_pair
 		fired {
 			
