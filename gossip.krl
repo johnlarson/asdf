@@ -146,6 +146,8 @@ ruleset gossip {
 			type = chooseRandomly(options, "key", function(v, k) {v});
 			//type = (not(ent:rumors) || seenScore > rumorScore) => "seen" | "rumor";
 			type.klog("\tTYPE");
+			type = ent:rumors && ent:rumors != {} => type | "seen";
+			type.klog("\tTYPE");
 			msg = type == "seen" => buildSeen() | buildRumorFor(theirSeen);
 			msg.klog("\tMSG");
 			[type, msg].klog("RET preparedMessage")
@@ -269,7 +271,7 @@ ruleset gossip {
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			//raise gossip event "heartbeat" attributes {}
+			raise gossip event "heartbeat" attributes {}
 		}
 	}
 
@@ -324,9 +326,9 @@ ruleset gossip {
 	rule set_gossip_timeout {
 		select when gossip heartbeat
 		fired {
-			//schedule gossip event "heartbeat"
-			//	at time:add(time:now(), {"ms": INTERVAL})
-			//	attributes {}
+			schedule gossip event "heartbeat"
+				at time:add(time:now(), {"ms": INTERVAL})
+				attributes {}
 		}
 	}
 
