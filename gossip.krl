@@ -2,13 +2,17 @@ ruleset gossip {
 
 	meta {
 		name "Gossip"
-		shares __testing, getPeer, sandbox
+		shares __testing, getPeer, reports, sandbox
 	}
 
 	global {
 
 		__testing = {
 			"queries": [
+				{
+					"name": "reports",
+					"args": []
+				},
 				{
 					"name": "getPeer",
 					"args": ["state"]
@@ -57,6 +61,10 @@ ruleset gossip {
 		sandbox = function() {
 			[][0].klog("ZERO");
 			[][-1].klog("NEG")
+		}
+
+		reports = function() {
+			ent:rumors
 		}
 
 		getPeer = function() {
