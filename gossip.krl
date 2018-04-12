@@ -248,7 +248,7 @@ ruleset gossip {
 	rule init_own_seen {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			ent:seen = ent:seen.defaultsTo({});
+			ent:seen := ent:seen.defaultsTo({});
 			ent:seen{meta:picoId} := ent:seen{meta:picoId}.defaultsTo({})
 		}
 	}
@@ -256,7 +256,7 @@ ruleset gossip {
 	rule start_gossiping {
 		select when wrangler ruleset_added where rids >< meta:rid
 		fired {
-			//raise gossip event "heartbeat" attributes {}
+			raise gossip event "heartbeat" attributes {}
 		}
 	}
 
@@ -306,9 +306,9 @@ ruleset gossip {
 	rule set_gossip_timeout {
 		select when gossip heartbeat
 		fired {
-			//schedule gossip event "heartbeat"
-			//	at time:add(time:now(), {"ms": INTERVAL})
-			//	attributes {}
+			schedule gossip event "heartbeat"
+				at time:add(time:now(), {"ms": INTERVAL})
+				attributes {}
 		}
 	}
 
