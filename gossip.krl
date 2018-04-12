@@ -362,7 +362,7 @@ ruleset gossip {
 		}
 	}
 
-	rule receive_seen {
+	rule store_seen {
 		select when gossip seen
 		pre {
 			x = a.klog("START receive_rumor")
@@ -379,6 +379,16 @@ ruleset gossip {
 			ent:seen{id}.klog("\t\tENT:SEEN{ID}");
 			a.klog("END receive_seen")
 		}
+	}
+
+	rule respond_seen {
+		select when gossip seen
+		pre {
+			subscriber = event:attr("picoId")
+			seen = event:attr("seen")
+			m = buildRumorFor(seen)
+		}
+		send(subscriber, m, "rumor")
 	}
 
 	rule add_subscription {
