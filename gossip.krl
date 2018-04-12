@@ -387,8 +387,25 @@ ruleset gossip {
 			subscriber = event:attr("picoId")
 			seen = event:attr("seen")
 			m = buildRumorFor(seen)
+			has_rumors = ent:rumors && ent:rumors != {}
+			event_to_raise = has_rumors => "rumor_ready" | "nothing"
 		}
-		send(subscriber, m, "rumor")
+		fired {
+			raise gossip event event_to_raise
+				attributes {
+					"subscriber": subscriber,
+					"m": m
+				}
+		}
+	}
+
+	rule send_rumor {
+		select when gossip rumor_ready
+		pre {
+			subscriber = event:attr("subscriber")
+			m = event:attr("m")
+		}
+		send(subscriber, m, rumor)
 	}
 
 	rule add_subscription {
