@@ -108,7 +108,7 @@ ruleset gossip {
 
 		buildSeen = function(mySeen) {
 			id = meta:picoId;
-			seen = ent:seen{id}.defaultsTo({})
+			seen = ent:seen{id}.defaultsTo({});
 			{
 				"picoId": id,
 				"seen": seen
@@ -130,7 +130,7 @@ ruleset gossip {
 		getRandomRumor = function() {
 			rumors = ent:rumors
 				.values()
-				.reduce(function(a, b) {a.append(b)}, [])
+				.reduce(function(a, b) {a.append(b)}, []);
 			rumors[random:integer(rumors.length() - 1)]
 		}
 
@@ -206,21 +206,6 @@ ruleset gossip {
 					"subscriber": subscriber,
 					"m": m
 				};
-		}
-	}
-
-	rule store_own_rumor {
-		select when gossip sent_rumor
-		pre {
-			subscriber = event:attr("subscriber")
-			m = event:attr("m")
-			req = m{"MessageID"}.split(":")[1]
-			path = [subscriber, m{"SensorID"}]
-		}
-		fired {
-			ent:seen{subscriber} := ent:seen{subscriber}.defaultsTo({});
-			prev_highest = ent:seen{path}.defaultsTo(-1);
-			ent:seen{path} := req == prev_highest + 1 => req | prev_highest;
 		}
 	}
 
@@ -376,13 +361,6 @@ ruleset gossip {
 			};
 			ent:seen := ent:seen.defaultsTo({});
 			ent:seen{id} := event:attr("seen")
-		}
-	}
-
-	rule init_subscription_seen_info {
-		select when gossip new_id_sub_pair
-		fired {
-			
 		}
 	}
 
