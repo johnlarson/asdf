@@ -2,7 +2,7 @@ ruleset gossip {
 
 	meta {
 		name "Gossip"
-		shares __testing, getPeer, reports, sandbox
+		shares __testing, reports, isOn, sandbox
 	}
 
 	global {
@@ -14,16 +14,8 @@ ruleset gossip {
 					"args": []
 				},
 				{
-					"name": "getPeer",
-					"args": ["state"]
-				},
-				{
-					"name": "preparedMessage",
-					"args": ["state", "subscriber"]
-				},
-				{
-					"name": "maxSelfKnown",
-					"args": ["id"]
+					"name": "isOn",
+					"args": []
 				},
 				{
 					"name": "sandbox",
@@ -33,23 +25,23 @@ ruleset gossip {
 			"events": [
 				{
 					"domain": "gossip",
+					"type": "toggle",
+					"attrs": []
+				},
+								{
+					"domain": "gossip",
+					"type": "add_subscription",
+					"attrs": ["wellKnown_Tx", "Tx_host"]
+				},
+				{
+					"domain": "gossip",
 					"type": "heartbeat",
 					"attrs": []
 				},
 				{
 					"domain": "gossip",
-					"type": "rumor",
-					"attrs": [
-						"MessageID",
-						"SensorID",
-						"Temperature",
-						"Timestamp"
-					]
-				},
-				{
-					"domain": "gossip",
-					"type": "add_subscription",
-					"attrs": ["wellKnown_Tx", "Tx_host"]
+					"type": "process",
+					"attrs": ["status"]
 				}
 			]
 		}
@@ -250,6 +242,10 @@ ruleset gossip {
 			}).values(){[0, toChoose]}.klog("RET chooseRandomlyNoDefault")
 		}
 
+		isOn = function() {
+			ent:is_on.defaultsTo(true)
+		}
+
 		send = defaction(subscriber, m, type) {
 			x = a.klog("START send");
 			x = subscriber.klog("\tSUBSCRIBER");
@@ -284,7 +280,7 @@ ruleset gossip {
 	}
 
 	rule gossip {
-		select when gossip heartbeat where ent:id_to_sub
+		select when gossip heartbeat where ent:id_to_sub && isOn()
 		pre {
 			x = a.klog("START gossip")
 			x = event:attrs.klog("\tATTRS")
@@ -341,7 +337,15 @@ ruleset gossip {
 	}
 
 	rule receive_rumor {
-		select when gossip rumor
+		select when gossip rumor where isOn()
+		fired {
+			raise gossip event "rumor_received"
+				attributes event:attrs
+		}
+	}
+
+	rule handle_rumor {
+		select when gossip rumor_received
 		pre {
 			x = a.klog("START receive_rumor")
 			x = event:attrs.klog("\tATTRS")
@@ -371,7 +375,7 @@ ruleset gossip {
 	}
 
 	rule store_seen {
-		select when gossip seen
+		select when gossip seen where isOn()
 		pre {
 			x = a.klog("START receive_rumor")
 			x = event:attrs.klog("ATTRS")
@@ -390,7 +394,7 @@ ruleset gossip {
 	}
 
 	rule respond_seen {
-		select when gossip seen
+		select when gossip seen where isOn()
 		pre {
 			subscriber = event:attr("picoId")
 			seen = event:attr("seen")
@@ -444,7 +448,7 @@ ruleset gossip {
 			seq = getNextSequenceNumber()
 		}
 		fired {
-			raise gossip event "rumor"
+			raise gossip event "rumor_received"
 				attributes {
 					"MessageID": <<#{id}:#{seq}>>,
 					"SensorID": id,
@@ -500,6 +504,20 @@ ruleset gossip {
 		select when gossip new_id_sub_pair
 		fired {
 			
+		}
+	}
+
+	rule off_on {
+		select when gossip process
+		fired {
+			ent:is_on := event:attr("status") == "on"
+		}
+	}
+
+	rule toggle {
+		select when gossip toggle
+		fired {
+			ent:is_on := not(isOn())
 		}
 	}
 
