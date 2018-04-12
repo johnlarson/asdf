@@ -51,8 +51,8 @@ ruleset gossip {
 		}
 
 		INTERVAL = 1000
-		RUMOR_FACTOR = 3
-		KNOWN_FACTOR = 2
+		RUMOR_FACTOR = 1
+		KNOWN_FACTOR = 1
 
 		sandbox = function() {
 			[][0].klog("ZERO");
@@ -131,7 +131,12 @@ ruleset gossip {
 			rumorScore.klog("\tRUMOR SCORE");
 			seenScore = SEEN_FACTOR * getNeedScore(theirSeen, mySeen);
 			seenScore.klog("\tSEEN SCORE");
-			type = (not(ent:rumors) || seenScore > rumorScore) => "seen" | "rumor";
+			options = {
+				"seen": 50,
+				"rumor": 50
+			};
+			type = chooseRandomly(options, "key", function(v, k) {v});
+			//type = (not(ent:rumors) || seenScore > rumorScore) => "seen" | "rumor";
 			type.klog("\tTYPE");
 			msg = type == "seen" => buildSeen() | buildRumorFor(theirSeen);
 			msg.klog("\tMSG");
