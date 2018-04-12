@@ -98,6 +98,14 @@ ruleset gossip {
 			seen1.klog("\tSEEN1");
 			seen2.klog("\tSEEN2");
 			key.klog("\tKEY");
+			s1 = seen1{key};
+			s1.klog("S1");
+			s1 = s1 == null => -1 | s1;
+			s1.klog("S1");
+			s2 = seen2{key};
+			s1.klog("S2");
+			s2 = s2 == null => -1 |s2;
+			s1.klog("S1");
 			diff = seen2 >< key => seen1{key} - seen2{key} | seen1{key} + 1;
 			diff.klog("\tDIFF");
 			(diff > 0 => diff | 0).klog("RET getNeedScoreSingle")
@@ -159,23 +167,23 @@ ruleset gossip {
 		buildRumorFor = function(seen) {
 			a.klog("START buildRumorFor");
 			seen.klog("\tSEEN");
+			mine = ent:seen{meta:picoId};
+			mine.klog("\t\t\tMINE");
 			a.klog("\tLOOP chooseRandomly");
 			seen.klog("\t\tMAP (seen)");
 			"key".klog("\t\tTO_CHOOSE");
 			null.klog("\t\tDEFAULT");
-			sensorId = chooseRandomly(seen, "key", function(v, k) {
+			sensorId = chooseRandomly(mine, "key", function(v, k) {
 				[v, k].klog("\t\tV, K");
-				mine = ent:seen{meta:picoId};
-				mine.klog("\t\t\tMINE");
 				getNeedScoreSingle(mine, seen, k).klog("\t\t\tNEED_SCORE")
 			});
 			sensorId.klog("\tSENSOR_ID");
-			latest = sensorId => ent:seen{sensorId} | -1;
-			latest.klog("\tLATEST");
 			ids = ent:rumors.keys();
 			ids.klog("\tIDS");
 			sensorId.defaultsTo(ids[random:integer(0, ids.length() - 1)]);
 			sensorId.klog("\tSENSOR ID DEFAULTED");
+			latest = seen{sensorId}.defaultsTo(-1);
+			latest.klog("\tLATEST");
 			needed = latest + 1;
 			needed.klog("\tNEEDED");
 			(sensorId => ent:rumors{[sensorId, needed]}.klog("\tBY PATH") | getRandomRumor().klog("\tTOTALLY RANDOM")).klog("RET buildRumorFor")
